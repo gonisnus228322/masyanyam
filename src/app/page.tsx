@@ -436,7 +436,7 @@ export default function App() {
         )}
       </main>
 
-      {/* Media Stream Modal with TV Remote Focus Compatibility */}
+      {/* Media Stream Modal */}
       {selectedMedia && (
         <div 
           ref={modalRef}
@@ -682,23 +682,25 @@ function MediaCard({ media, onClick }) {
     ? `${POSTER_BASE_URL}${media.poster_path}` 
     : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=500&q=80';
 
-  // Explicit TV remote keydown listener to trigger click on Enter or Space
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' || e.key === ' ' || e.keyCode === 13 || e.keyCode === 32) {
-      e.preventDefault();
-      onClick();
-    }
+  const handleClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onClick();
   };
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
       tabIndex={0}
-      onClick={onClick}
-      onKeyDown={handleKeyDown}
+      onClick={handleClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ' || e.keyCode === 13 || e.keyCode === 32) {
+          handleClick(e);
+        }
+      }}
       className="group relative flex flex-col cursor-pointer bg-neutral-900 rounded-xl overflow-hidden border border-white/5 text-left w-full transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-red-600/10 focus:outline-none focus:ring-4 focus:ring-red-500 focus:scale-105"
     >
-      <div className="relative aspect-[2/3] w-full bg-neutral-950 overflow-hidden">
+      <div className="relative aspect-[2/3] w-full bg-neutral-950 overflow-hidden pointer-events-none">
         <img
           src={posterUrl}
           alt={media.title || media.name}
@@ -718,7 +720,7 @@ function MediaCard({ media, onClick }) {
         )}
       </div>
 
-      <div className="p-3 flex flex-col flex-1 justify-between bg-neutral-900 w-full">
+      <div className="p-3 flex flex-col flex-1 justify-between bg-neutral-900 w-full pointer-events-none">
         <h3 className="text-xs font-bold text-neutral-200 line-clamp-1 group-hover:text-red-500 group-focus:text-red-500 transition-colors">
           {media.title || media.name}
         </h3>
@@ -726,6 +728,6 @@ function MediaCard({ media, onClick }) {
           {(media.release_date || media.first_air_date || '').substring(0, 4) || 'N/A'}
         </p>
       </div>
-    </button>
+    </div>
   );
 }
