@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Search, Play, Film, Tv, Info, X, Star, 
   Sparkles, Server, Heart, Bookmark, Volume2, CheckCircle2, AlertCircle, RefreshCw
-} from 'lucide-react';
+} from 'lucide-react'
 
 const TMDB_API_KEY = '82e67ddb0ee6412aa60aa10240cc50c9';
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
