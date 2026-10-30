@@ -44,31 +44,39 @@ export default function App() {
     }
   }, [watchlist]);
 
-  // Ultra-Reliable Stream Sources
+  // Clean, Mobile-Friendly Embed Sources with Native Audio Support
   const getEmbedSources = (id, type, season = 1, episode = 1) => [
     {
-      name: 'Vidsrc.cc (Primary)',
+      name: 'Vidsrc VIP (Working)',
       quality: '1080p HD',
       badgeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-      url: type === 'movie'
-        ? `https://vidsrc.cc/v2/embed/movie/${id}`
-        : `https://vidsrc.cc/v2/embed/tv/${id}/${season}/${episode}`
-    },
-    {
-      name: 'AutoEmbed Stream',
-      quality: '1080p HD',
-      badgeColor: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-      url: type === 'movie'
-        ? `https://player.autoembed.cc/embed/movie/${id}`
-        : `https://player.autoembed.cc/embed/tv/${id}/${season}/${episode}`
-    },
-    {
-      name: 'Vidsrc VIP',
-      quality: '1080p / 720p',
-      badgeColor: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
       url: type === 'movie' 
         ? `https://vidsrc.me/embed/movie?tmdb=${id}`
         : `https://vidsrc.me/embed/tv?tmdb=${id}&season=${season}&episode=${episode}`
+    },
+    {
+      name: 'Vidsrc.icu (Mobile OK)',
+      quality: '1080p HD',
+      badgeColor: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+      url: type === 'movie'
+        ? `https://vidsrc.icu/embed/movie/${id}`
+        : `https://vidsrc.icu/embed/tv/${id}/${season}/${episode}`
+    },
+    {
+      name: 'SuperEmbed (Ad-Lite)',
+      quality: '1080p / 720p',
+      badgeColor: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+      url: type === 'movie'
+        ? `https://multiembed.mov/directstream.php?video_id=${id}&tmdb=1`
+        : `https://multiembed.mov/directstream.php?video_id=${id}&tmdb=1&s=${season}&e=${episode}`
+    },
+    {
+      name: 'Vidsrc.cc',
+      quality: '1080p HD',
+      badgeColor: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+      url: type === 'movie'
+        ? `https://vidsrc.cc/v2/embed/movie/${id}`
+        : `https://vidsrc.cc/v2/embed/tv/${id}/${season}/${episode}`
     },
     {
       name: '2Embed Prime',
@@ -390,7 +398,7 @@ export default function App() {
                   }
                   className="w-full h-full border-0"
                   allowFullScreen
-                  allow="autoplay; encrypted-media; picture-in-picture; accelerometer; gyroscope; clipboard-write"
+                  allow="autoplay; fullscreen; encrypted-media; picture-in-picture; accelerometer; gyroscope; clipboard-write"
                   referrerPolicy="origin"
                   title="Stream Player"
                 />
@@ -416,7 +424,7 @@ export default function App() {
                       <Play className="w-9 h-9 fill-current ml-1 group-hover:scale-110 transition-transform" />
                     </button>
                     <span className="text-sm font-semibold tracking-wide text-neutral-200 bg-black/60 px-4 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
-                      <Volume2 size={16} /> Click Play to Start Stream
+                      <Volume2 size={16} /> Tap Play to Start Stream & Enable Audio
                     </span>
                   </div>
                 </div>
@@ -427,12 +435,12 @@ export default function App() {
               <div className="flex flex-col space-y-3 p-4 bg-neutral-950/80 rounded-xl border border-white/5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs font-semibold text-neutral-400 uppercase tracking-wider">
-                    <Server className="w-4 h-4 text-red-500" /> Active Video Sources:
+                    <Server className="w-4 h-4 text-red-500" /> Active Stream Mirrors:
                   </div>
-                  <span className="text-[11px] text-neutral-500">Switch servers if a provider buffers</span>
+                  <span className="text-[11px] text-neutral-500">Switch server if audio is muted or video buffers</span>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                   {getEmbedSources(
                     selectedMedia.id,
                     selectedMedia.media_type || (selectedMedia.title ? 'movie' : 'tv')
