@@ -399,6 +399,7 @@ export default function App() {
                   className="w-full h-full border-0"
                   allowFullScreen
                   allow="autoplay; fullscreen; encrypted-media; picture-in-picture; accelerometer; gyroscope; clipboard-write"
+                  sandbox="allow-scripts allow-same-origin allow-forms"
                   referrerPolicy="origin"
                   title="Stream Player"
                 />
