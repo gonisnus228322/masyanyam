@@ -44,10 +44,10 @@ export default function App() {
     }
   }, [watchlist]);
 
-  // Clean, Mobile-Friendly Embed Sources with Native Audio Support
+// Stable, high-uptime video embed mirrors
   const getEmbedSources = (id, type, season = 1, episode = 1) => [
     {
-      name: 'Vidsrc VIP (Working)',
+      name: 'VidSrc VIP',
       quality: '1080p HD',
       badgeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
       url: type === 'movie' 
@@ -55,36 +55,36 @@ export default function App() {
         : `https://vidsrc.me/embed/tv?tmdb=${id}&season=${season}&episode=${episode}`
     },
     {
-      name: 'Vidsrc.icu (Mobile OK)',
+      name: 'VidSrc Pro',
       quality: '1080p HD',
       badgeColor: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
       url: type === 'movie'
-        ? `https://vidsrc.icu/embed/movie/${id}`
-        : `https://vidsrc.icu/embed/tv/${id}/${season}/${episode}`
+        ? `https://vidsrc.pro/embed/movie/${id}`
+        : `https://vidsrc.pro/embed/tv/${id}/${season}/${episode}`
     },
     {
-      name: 'SuperEmbed (Ad-Lite)',
-      quality: '1080p / 720p',
+      name: 'AutoEmbed HQ',
+      quality: '1080p HD',
       badgeColor: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
       url: type === 'movie'
-        ? `https://multiembed.mov/directstream.php?video_id=${id}&tmdb=1`
-        : `https://multiembed.mov/directstream.php?video_id=${id}&tmdb=1&s=${season}&e=${episode}`
+        ? `https://player.autoembed.cc/embed/movie/${id}`
+        : `https://player.autoembed.cc/embed/tv/${id}/${season}/${episode}`
     },
     {
-      name: 'Vidsrc.cc',
-      quality: '1080p HD',
-      badgeColor: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-      url: type === 'movie'
-        ? `https://vidsrc.cc/v2/embed/movie/${id}`
-        : `https://vidsrc.cc/v2/embed/tv/${id}/${season}/${episode}`
-    },
-    {
-      name: '2Embed Prime',
+      name: '2Embed Stream',
       quality: '1080p / 720p',
       badgeColor: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
       url: type === 'movie'
         ? `https://www.2embed.cc/embed/${id}`
         : `https://www.2embed.cc/embedtv/${id}&s=${season}&e=${episode}`
+    },
+    {
+      name: 'VidSrc XYZ',
+      quality: '1080p HD',
+      badgeColor: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+      url: type === 'movie'
+        ? `https://vidsrc.xyz/embed/movie?tmdb=${id}`
+        : `https://vidsrc.xyz/embed/tv?tmdb=${id}&season=${season}&episode=${episode}`
     }
   ];
 
