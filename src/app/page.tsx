@@ -406,7 +406,7 @@ export default function App() {
         )}
       </main>
 
-      {/* Media Stream Modal with Working Embedded Player & 20 Stock Sources */}
+      {/* Media Stream Modal with Sandboxed iOS Ad Protection */}
       {selectedMedia && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-neutral-950/95 backdrop-blur-xl overflow-y-auto">
           <div className="relative w-full max-w-5xl bg-neutral-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden my-auto">
@@ -417,23 +417,33 @@ export default function App() {
               <X className="w-5 h-5" />
             </button>
 
-            <div ref={playerContainerRef} className="relative aspect-video bg-black w-full overflow-hidden">
+            <div 
+              ref={playerContainerRef} 
+              className="relative aspect-video bg-black w-full overflow-hidden"
+              onTouchStart={(e) => {
+                if (isShieldActive) e.stopPropagation();
+              }}
+            >
               {isPlaying ? (
                 <div className="relative w-full h-full">
-                  {/* Anti-Redirect Shield Curtain */}
+                  {/* Mobile Ad-Shield Curtain */}
                   {isShieldActive && (
                     <div 
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setIsShieldActive(false);
-                        triggerFullscreen();
                       }}
-                      className="absolute inset-0 z-20 bg-neutral-950/60 backdrop-blur-xs cursor-pointer flex flex-col items-center justify-center gap-3 p-4 text-center"
+                      onTouchEnd={(e) => {
+                        e.stopPropagation();
+                        setIsShieldActive(false);
+                      }}
+                      className="absolute inset-0 z-30 bg-neutral-950/70 backdrop-blur-xs cursor-pointer flex flex-col items-center justify-center gap-3 p-4 text-center"
                     >
                       <div className="w-16 h-16 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-600/50 animate-bounce">
                         <Play className="w-8 h-8 fill-current ml-1" />
                       </div>
-                      <span className="bg-black/90 text-xs font-semibold text-white px-4 py-2 rounded-full border border-white/25 shadow-xl flex items-center gap-1.5">
-                        <ShieldCheck size={14} className="text-emerald-400" /> Tap to activate stream player safely
+                      <span className="bg-black/90 text-xs font-semibold text-white px-4 py-2 rounded-full border border-white/25 shadow-xl">
+                        Tap here to unlock clean player (Blocks Ad Redirects)
                       </span>
                     </div>
                   )}
@@ -447,9 +457,10 @@ export default function App() {
                         selectedEpisode
                       )[activeServer].url
                     }
-                    className="w-full h-full border-0 absolute inset-0 z-10"
+                    className="w-full h-full border-0 absolute inset-0 z-10 pointer-events-auto"
                     allowFullScreen
-                    allow="autoplay; fullscreen; encrypted-media; picture-in-picture; accelerometer; gyroscope; clipboard-write"
+                    allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+                    sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
                     referrerPolicy="origin"
                     title="Stream Player"
                   />
@@ -479,7 +490,7 @@ export default function App() {
                       <Play className="w-9 h-9 fill-current ml-1 group-hover:scale-110 transition-transform" />
                     </button>
                     <span className="text-sm font-semibold tracking-wide text-neutral-200 bg-black/60 px-4 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
-                      <Volume2 size={16} /> Tap Play to Stream Instantly
+                      <Volume2 size={16} /> Tap Play to Stream Securely
                     </span>
                   </div>
                 </div>
@@ -494,7 +505,7 @@ export default function App() {
                     <Server className="w-4 h-4 text-red-500" /> Stock Sources (20 Available):
                     {isCheckingSources && <RefreshCw size={12} className="animate-spin text-red-500 ml-1" />}
                   </div>
-                  <span className="text-[11px] text-neutral-500">Auto-selecting working mirror</span>
+                  <span className="text-[11px] text-neutral-500">iOS Sandboxed Protection Active</span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-48 overflow-y-auto pr-1">
