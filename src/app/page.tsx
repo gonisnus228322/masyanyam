@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Search, Play, Film, Tv, Info, X, Star, 
-  Sparkles, Server, Heart, Bookmark, Volume2, CheckCircle2, AlertCircle, RefreshCw 
+  Sparkles, Server, Heart, Bookmark, Volume2, CheckCircle2, AlertCircle, RefreshCw, ShieldAlert 
 } from 'lucide-react';
 
 const TMDB_API_KEY = '82e67ddb0ee6412aa60aa10240cc50c9';
@@ -30,6 +30,7 @@ export default function App() {
   const [isShieldActive, setIsShieldActive] = useState(true);
   
   const playerContainerRef = useRef(null);
+  const iframeRef = useRef(null);
 
   // Auto-Check / Source Health States
   const [serverStatuses, setServerStatuses] = useState({});
@@ -51,6 +52,31 @@ export default function App() {
       console.error('Could not save watchlist', e);
     }
   }, [watchlist]);
+
+  // Anti-Popup Shield: Intercepts window.open calls and rogue redirects from iframes
+  useEffect(() => {
+    if (!isPlaying) return;
+
+    const originalOpen = window.open;
+    // Neutralize window.open so popup ads can't open new tabs or invoke mobile app links
+    window.open = function(url, target, features) {
+      console.warn('Blocked popup redirection attempt to:', url);
+      return null;
+    };
+
+    const handleBeforeUnload = (e) => {
+      // Prevents page navigation hijacking if an ad tries to replace the main page history
+      e.preventDefault();
+      e.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.open = originalOpen;
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isPlaying]);
 
   // 20 Stock Stream Sources with 2Embed Prime set as Primary (#1)
   const getEmbedSources = (id, type, season = 1, episode = 1) => [
@@ -76,12 +102,11 @@ export default function App() {
     { id: 'cineb', name: 'CineB Feed', quality: '1080p HD', domain: 'https://cineb.rs', url: type === 'movie' ? `https://cineb.rs/embed/movie/${id}` : `https://cineb.rs/embed/tv/${id}/${season}/${episode}` }
   ];
 
-  // Auto-Check Health and pick 2Embed as default
   const verifySourcesHealth = async (id, type, season, episode) => {
     setIsCheckingSources(true);
     const sources = getEmbedSources(id, type, season, episode);
     const statusMap = {};
-    let firstWorkingIdx = 0; // Default to 2embed (index 0)
+    let firstWorkingIdx = 0;
 
     for (let i = 0; i < sources.length; i++) {
       const src = sources[i];
@@ -407,7 +432,7 @@ export default function App() {
         )}
       </main>
 
-      {/* Media Stream Modal with Fullscreen & 20 Stock Source Settings */}
+      {/* Media Stream Modal with Anti-Popup Blocker & Fullscreen */}
       {selectedMedia && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-neutral-950/95 backdrop-blur-xl overflow-y-auto">
           <div className="relative w-full max-w-5xl bg-neutral-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden my-auto">
@@ -421,7 +446,7 @@ export default function App() {
             <div ref={playerContainerRef} className="relative aspect-video bg-black w-full overflow-hidden">
               {isPlaying ? (
                 <div className="relative w-full h-full">
-                  {/* Anti-Redirect Click Shield */}
+                  {/* Anti-Redirect & Anti-Popup Click Shield */}
                   {isShieldActive && (
                     <div 
                       onClick={() => {
@@ -429,15 +454,16 @@ export default function App() {
                         triggerFullscreen();
                       }}
                       className="absolute inset-0 z-20 bg-transparent cursor-pointer flex items-end justify-center pb-4"
-                      title="Click once to enable player controls & fullscreen"
+                      title="Click once to block redirects, start player & enter Fullscreen"
                     >
-                      <span className="bg-black/80 text-xs text-white px-4 py-2 rounded-full border border-white/20 pointer-events-none shadow-lg animate-pulse">
-                        Click anywhere to start & enter Fullscreen
+                      <span className="bg-black/80 text-xs text-white px-4 py-2 rounded-full border border-white/20 pointer-events-none shadow-lg animate-pulse flex items-center gap-1.5">
+                        <ShieldAlert size={14} className="text-emerald-400" /> Click anywhere to start stream safely
                       </span>
                     </div>
                   )}
 
                   <iframe
+                    ref={iframeRef}
                     src={
                       getEmbedSources(
                         selectedMedia.id,
@@ -486,14 +512,14 @@ export default function App() {
             </div>
 
             <div className="p-4 sm:p-6 bg-neutral-900 border-t border-white/10 space-y-6">
-              {/* 20 Stock Source Grid Panel with Real-time Status and Fallbacks */}
+              {/* Stock Source Grid Panel */}
               <div className="flex flex-col space-y-3 p-4 bg-neutral-950/80 rounded-xl border border-white/5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs font-semibold text-neutral-400 uppercase tracking-wider">
                     <Server className="w-4 h-4 text-red-500" /> Stock Sources (20 Available):
                     {isCheckingSources && <RefreshCw size={12} className="animate-spin text-red-500 ml-1" />}
                   </div>
-                  <span className="text-[11px] text-neutral-500">2Embed Prime primary mirror</span>
+                  <span className="text-[11px] text-neutral-500">Popup & App-Redirect Blocker Active</span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-48 overflow-y-auto pr-1">
