@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Search, Play, Film, Tv, Info, X, Star, 
-  Sparkles, Server, Heart, Bookmark, Volume2, CheckCircle2, AlertCircle, RefreshCw, ShieldCheck 
+  Sparkles, Server, Heart, Bookmark, Volume2, CheckCircle2, AlertCircle, RefreshCw 
 } from 'lucide-react';
 
 const TMDB_API_KEY = '82e67ddb0ee6412aa60aa10240cc50c9';
@@ -104,16 +104,6 @@ export default function App() {
     setServerStatuses(statusMap);
     setIsCheckingSources(false);
     setActiveServer(firstWorkingIdx);
-  };
-
-  const triggerFullscreen = () => {
-    if (playerContainerRef.current) {
-      if (playerContainerRef.current.requestFullscreen) {
-        playerContainerRef.current.requestFullscreen().catch(() => {});
-      } else if (playerContainerRef.current.webkitRequestFullscreen) {
-        playerContainerRef.current.webkitRequestFullscreen();
-      }
-    }
   };
 
   useEffect(() => {
@@ -407,130 +397,70 @@ export default function App() {
       </main>
 
       {/* Media Stream Modal with Direct Clean-Tab Bypass Option */}
-{selectedMedia && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-neutral-950/95 backdrop-blur-xl overflow-y-auto">
-    <div className="relative w-full max-w-5xl bg-neutral-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden my-auto">
-      <button
-        onClick={() => { setSelectedMedia(null); setIsPlaying(false); setIsShieldActive(true); setActiveServer(0); }}
-        className="absolute top-4 right-4 z-30 p-2.5 rounded-full bg-black/60 hover:bg-black/90 text-neutral-300 hover:text-white transition-all backdrop-blur-md border border-white/10"
-      >
-        <X className="w-5 h-5" />
-      </button>
+      {selectedMedia && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-neutral-950/95 backdrop-blur-xl overflow-y-auto">
+          <div className="relative w-full max-w-5xl bg-neutral-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden my-auto">
+            <button
+              onClick={() => { setSelectedMedia(null); setIsPlaying(false); setIsShieldActive(true); setActiveServer(0); }}
+              className="absolute top-4 right-4 z-30 p-2.5 rounded-full bg-black/60 hover:bg-black/90 text-neutral-300 hover:text-white transition-all backdrop-blur-md border border-white/10"
+            >
+              <X className="w-5 h-5" />
+            </button>
 
-      <div ref={playerContainerRef} className="relative aspect-video bg-black w-full overflow-hidden flex flex-col items-center justify-center">
-        {isPlaying ? (
-          <div className="relative w-full h-full flex flex-col items-center justify-center bg-neutral-950 p-6 text-center">
-            <div className="max-w-md space-y-4">
-              <div className="w-16 h-16 bg-red-600/20 text-red-500 rounded-full flex items-center justify-center mx-auto border border-red-500/30">
-                <Play className="w-8 h-8 fill-current ml-1" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-lg font-bold text-white">Stream Ready in Clean Tab</h3>
-                <p className="text-xs text-neutral-400">
-                  {getEmbedSources(selectedMedia.id, selectedMedia.media_type || (selectedMedia.title ? 'movie' : 'tv'), selectedSeason, selectedEpisode)[activeServer].name} blocks site embedding for security. Open it directly in a clean tab to watch instantly without ads or restrictions!
-                </p>
-              </div>
-              <a
-                href={
-                  getEmbedSources(
-                    selectedMedia.id,
-                    selectedMedia.media_type || (selectedMedia.title ? 'movie' : 'tv'),
-                    selectedSeason,
-                    selectedEpisode
-                  )[activeServer].url
-                }
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 w-full py-3 px-6 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl shadow-lg shadow-red-600/30 transition-all text-sm"
-              >
-                <Play className="w-4 h-4 fill-current" />
-                Open Clean Stream in New Tab
-              </a>
-            </div>
-          </div>
-        ) : (
-          <div className="relative w-full h-full flex items-center justify-center">
-            {selectedMedia.backdrop_path ? (
-              <img
-                src={`${IMAGE_BASE_URL}${selectedMedia.backdrop_path}`}
-                alt={selectedMedia.title || selectedMedia.name}
-                className="w-full h-full object-cover filter brightness-50"
-              />
-            ) : (
-              <div className="w-full h-full bg-neutral-950 flex items-center justify-center text-neutral-600">
-                No Preview Available
-              </div>
-            )}
-
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/40">
-              <button
-                onClick={() => setIsPlaying(true)}
-                className="w-20 h-20 rounded-full bg-red-600 text-white flex items-center justify-center shadow-2xl shadow-red-600/50 hover:scale-110 active:scale-95 transition-all group"
-              >
-                <Play className="w-9 h-9 fill-current ml-1 group-hover:scale-110 transition-transform" />
-              </button>
-              <span className="text-sm font-semibold tracking-wide text-neutral-200 bg-black/60 px-4 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
-                <Volume2 size={16} /> Click to Launch Stream Option
-              </span>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="p-4 sm:p-6 bg-neutral-900 border-t border-white/10 space-y-6">
-        {/* Stock Source Grid Panel */}
-        <div className="flex flex-col space-y-3 p-4 bg-neutral-950/80 rounded-xl border border-white/5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs font-semibold text-neutral-400 uppercase tracking-wider">
-              <Server className="w-4 h-4 text-red-500" /> Stock Sources (20 Available):
-            </div>
-            <span className="text-[11px] text-neutral-500">Switch providers instantly</span>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-48 overflow-y-auto pr-1">
-            {getEmbedSources(
-              selectedMedia.id,
-              selectedMedia.media_type || (selectedMedia.title ? 'movie' : 'tv'),
-              selectedSeason,
-              selectedEpisode
-            ).map((srv, idx) => (
-              <button
-                key={srv.id}
-                onClick={() => setActiveServer(idx)}
-                className={`flex flex-col items-start p-2 rounded-lg border text-left transition-all ${
-                  activeServer === idx
-                    ? 'bg-red-600/20 border-red-500 text-white shadow-lg shadow-red-600/20'
-                    : 'bg-white/5 border-white/5 text-neutral-400 hover:text-white hover:bg-white/10'
-                }`}
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span className="text-xs font-bold truncate">{srv.name}</span>
-                  <CheckCircle2 size={12} className="text-emerald-400 shrink-0" />
+            <div ref={playerContainerRef} className="relative aspect-video bg-black w-full overflow-hidden flex flex-col items-center justify-center">
+              {isPlaying ? (
+                <div className="relative w-full h-full flex flex-col items-center justify-center bg-neutral-950 p-6 text-center">
+                  <div className="max-w-md space-y-4">
+                    <div className="w-16 h-16 bg-red-600/20 text-red-500 rounded-full flex items-center justify-center mx-auto border border-red-500/30">
+                      <Play className="w-8 h-8 fill-current ml-1" />
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="text-lg font-bold text-white">Stream Ready in Clean Tab</h3>
+                      <p className="text-xs text-neutral-400">
+                        {getEmbedSources(selectedMedia.id, selectedMedia.media_type || (selectedMedia.title ? 'movie' : 'tv'), selectedSeason, selectedEpisode)[activeServer].name} protects its frames from embedding. Open it directly in a clean tab to watch instantly without ad overlays or frame errors!
+                      </p>
+                    </div>
+                    <a
+                      href={
+                        getEmbedSources(
+                          selectedMedia.id,
+                          selectedMedia.media_type || (selectedMedia.title ? 'movie' : 'tv'),
+                          selectedSeason,
+                          selectedEpisode
+                        )[activeServer].url
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-2 w-full py-3 px-6 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl shadow-lg shadow-red-600/30 transition-all text-sm"
+                    >
+                      <Play className="w-4 h-4 fill-current" />
+                      Open Clean Stream in New Tab
+                    </a>
+                  </div>
                 </div>
-                <span className="text-[10px] font-medium mt-0.5 text-neutral-400">
-                  {srv.quality}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-        {/* Rest of details/seasons/overview markup follows */}
-      </div>
-    </div>
-  </div>
-)}
+              ) : (
+                <div className="relative w-full h-full flex items-center justify-center">
+                  {selectedMedia.backdrop_path ? (
+                    <img
+                      src={`${IMAGE_BASE_URL}${selectedMedia.backdrop_path}`}
+                      alt={selectedMedia.title || selectedMedia.name}
+                      className="w-full h-full object-cover filter brightness-50"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-neutral-950 flex items-center justify-center text-neutral-600">
+                      No Preview Available
+                    </div>
+                  )}
+
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/40">
                     <button
-                      onClick={() => {
-                        setIsPlaying(true);
-                        setTimeout(triggerFullscreen, 300);
-                      }}
+                      onClick={() => setIsPlaying(true)}
                       className="w-20 h-20 rounded-full bg-red-600 text-white flex items-center justify-center shadow-2xl shadow-red-600/50 hover:scale-110 active:scale-95 transition-all group"
                     >
                       <Play className="w-9 h-9 fill-current ml-1 group-hover:scale-110 transition-transform" />
                     </button>
                     <span className="text-sm font-semibold tracking-wide text-neutral-200 bg-black/60 px-4 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
-                      <Volume2 size={16} /> Tap Play to Start Stream
+                      <Volume2 size={16} /> Click to Launch Stream Option
                     </span>
                   </div>
                 </div>
@@ -545,7 +475,7 @@ export default function App() {
                     <Server className="w-4 h-4 text-red-500" /> Stock Sources (20 Available):
                     {isCheckingSources && <RefreshCw size={12} className="animate-spin text-red-500 ml-1" />}
                   </div>
-                  <span className="text-[11px] text-neutral-500">Mobile Ad-Shield Active</span>
+                  <span className="text-[11px] text-neutral-500">Switch providers instantly</span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-48 overflow-y-auto pr-1">
