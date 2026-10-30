@@ -45,7 +45,7 @@ export default function App() {
     }
   }, [watchlist]);
 
-  // Clean Lineup including Polaris and active core mirrors
+  // Working lineup including 2Embed Prime, VidSrc, and Polaris
   const getEmbedSources = (id, type, season = 1, episode = 1) => [
     {
       id: 'vidsrc_me',
@@ -57,6 +57,15 @@ export default function App() {
         : `https://vidsrc.me/embed/tv?tmdb=${id}&season=${season}&episode=${episode}`
     },
     {
+      id: '2embed',
+      name: '2Embed Prime',
+      quality: '1080p / 720p',
+      badgeColor: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+      url: type === 'movie'
+        ? `https://www.2embed.cc/embed/${id}`
+        : `https://www.2embed.cc/embedtv/${id}&s=${season}&e=${episode}`
+    },
+    {
       id: 'polaris',
       name: 'Polaris',
       quality: '1080p HD',
@@ -66,22 +75,13 @@ export default function App() {
         : `https://vidsrc.cc/v2/embed/tv/${id}/${season}/${episode}`
     },
     {
-      id: 'embed_su',
-      name: 'Embed.su',
-      quality: '1080p / 4K',
-      badgeColor: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
-      url: type === 'movie'
-        ? `https://embed.su/embed/movie/${id}`
-        : `https://embed.su/embed/tv/${id}/${season}/${episode}`
-    },
-    {
-      id: 'autoembed',
-      name: 'AutoEmbed',
+      id: 'vidsrc_to',
+      name: 'VidSrc TO',
       quality: '1080p HD',
-      badgeColor: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+      badgeColor: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
       url: type === 'movie'
-        ? `https://player.autoembed.cc/embed/movie/${id}`
-        : `https://player.autoembed.cc/embed/tv/${id}/${season}/${episode}`
+        ? `https://vidsrc.to/embed/movie/${id}`
+        : `https://vidsrc.to/embed/tv/${id}/${season}/${episode}`
     }
   ];
 
@@ -179,38 +179,41 @@ export default function App() {
   const isSaved = (mediaId) => watchlist.some(item => item.id === mediaId);
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100 font-sans selection:bg-red-600 selection:text-white">
-      <header className="fixed top-0 left-0 right-0 z-40 bg-neutral-950/80 backdrop-blur-md border-b border-white/5 transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-8">
+    <div className="min-h-screen bg-neutral-950 text-neutral-100 font-sans selection:bg-red-600 selection:text-white pb-16">
+      {/* Responsive Header supporting mobile navigation */}
+      <header className="fixed top-0 left-0 right-0 z-40 bg-neutral-950/90 backdrop-blur-md border-b border-white/5 transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-auto py-3 flex flex-col md:flex-row items-center justify-between gap-3">
+          
+          <div className="flex items-center justify-between w-full md:w-auto gap-4">
             <button 
               onClick={() => { setSearchQuery(''); setCurrentTab('all'); }} 
-              className="text-3xl font-black tracking-tight focus:outline-none"
+              className="text-2xl sm:text-3xl font-black tracking-tight focus:outline-none"
             >
               <span className="bg-gradient-to-r from-red-500 via-rose-500 to-red-600 bg-clip-text text-transparent">
                 masyanya
               </span>
             </button>
 
-            <nav className="hidden md:flex items-center gap-1 bg-white/5 p-1 rounded-full border border-white/10">
+            {/* Mobile/Desktop Navigation Tabs */}
+            <nav className="flex items-center gap-1 bg-white/5 p-1 rounded-full border border-white/10 overflow-x-auto max-w-full">
               {[
                 { id: 'all', label: 'Home', icon: Sparkles },
                 { id: 'movie', label: 'Movies', icon: Film },
                 { id: 'tv', label: 'TV Shows', icon: Tv },
-                { id: 'watchlist', label: `My List (${watchlist.length})`, icon: Bookmark }
+                { id: 'watchlist', label: `List (${watchlist.length})`, icon: Bookmark }
               ].map(tab => {
                 const Icon = tab.icon;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => { setCurrentTab(tab.id); setSearchQuery(''); }}
-                    className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
                       currentTab === tab.id 
                         ? 'bg-red-600 text-white shadow-md shadow-red-600/20' 
                         : 'text-neutral-400 hover:text-white hover:bg-white/5'
                     }`}
                   >
-                    <Icon className="w-4 h-4" />
+                    <Icon className="w-3.5 h-3.5" />
                     {tab.label}
                   </button>
                 );
@@ -218,7 +221,7 @@ export default function App() {
             </nav>
           </div>
 
-          <div className="relative flex-1 max-w-md">
+          <div className="relative w-full md:max-w-xs">
             <div className="relative flex items-center">
               <Search className="absolute left-3.5 w-4 h-4 text-neutral-400" />
               <input
@@ -226,7 +229,7 @@ export default function App() {
                 placeholder="Search movies, TV shows..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-neutral-900/80 border border-white/10 rounded-full pl-10 pr-10 py-2 text-sm text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all"
+                className="w-full bg-neutral-900/80 border border-white/10 rounded-full pl-10 pr-10 py-1.5 text-xs sm:text-sm text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all"
               />
               {searchQuery && (
                 <button onClick={() => setSearchQuery('')} className="absolute right-3 text-neutral-400 hover:text-white p-1">
@@ -238,9 +241,9 @@ export default function App() {
         </div>
       </header>
 
-      <main className="pt-20 pb-20">
+      <main className="pt-32 sm:pt-28 pb-12">
         {searchQuery ? (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2">
             <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
               <Search className="w-5 h-5 text-red-500" />
               Search Results for <span className="text-red-500">&quot;{searchQuery}&quot;</span>
@@ -263,7 +266,7 @@ export default function App() {
             )}
           </div>
         ) : currentTab === 'watchlist' ? (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2">
             <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
               <Bookmark className="w-6 h-6 text-red-500" /> My Saved Watchlist
             </h2>
@@ -282,7 +285,7 @@ export default function App() {
         ) : (
           <>
             {heroMedia && (
-              <div className="relative w-full h-[70vh] min-h-[480px] max-h-[750px] mb-8 overflow-hidden">
+              <div className="relative w-full h-[65vh] sm:h-[70vh] min-h-[420px] max-h-[750px] mb-8 overflow-hidden">
                 <div className="absolute inset-0">
                   <img
                     src={`${IMAGE_BASE_URL}${heroMedia.backdrop_path}`}
@@ -448,9 +451,9 @@ export default function App() {
               <div className="flex flex-col space-y-3 p-4 bg-neutral-950/80 rounded-xl border border-white/5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs font-semibold text-neutral-400 uppercase tracking-wider">
-                    <Server className="w-4 h-4 text-red-500" /> Active Stream Mirrors:
+                    <Server className="w-4 h-4 text-red-500" /> Working Stream Mirrors:
                   </div>
-                  <span className="text-[11px] text-neutral-500">Shield & Unsandboxed mode active</span>
+                  <span className="text-[11px] text-neutral-500">Shield active</span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
