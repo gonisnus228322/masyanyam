@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Search, Play, Pause, Film, Tv, Info, X, Star, 
-  Sparkles, Server, Heart, Bookmark, Volume2, VolumeX, Maximize, CheckCircle2, RefreshCw 
+  Sparkles, Server, Heart, Bookmark, Volume2, VolumeX, Maximize, Settings, Subtitles, CheckCircle2, RefreshCw 
 } from 'lucide-react';
 
 const TMDB_API_KEY = '82e67ddb0ee6412aa60aa10240cc50c9';
@@ -27,10 +27,18 @@ export default function App() {
   const [selectedEpisode, setSelectedEpisode] = useState(1);
   const [mediaDetails, setMediaDetails] = useState(null);
   
-  // Custom Native Video Player States
+  // Custom Player UI States
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [volume, setVolume] = useState(1);
   const [progress, setProgress] = useState(0);
+  const [currentTime, setCurrentTime] = useState('0:00');
+  const [duration, setDuration] = useState('0:00');
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  const [showCaptionsMenu, setShowCaptionsMenu] = useState(false);
+  const [activeCaption, setActiveCaption] = useState('Off');
+
   const videoRef = useRef(null);
   const playerWrapperRef = useRef(null);
 
@@ -54,14 +62,12 @@ export default function App() {
     }
   }, [watchlist]);
 
-  // 20 Stock Stream Sources (Mapped with direct sample video fallback streams for native UI playback demo)
   const getEmbedSources = (id, type, season = 1, episode = 1) => [
     { 
       id: 'native_hq', 
-      name: 'Masyanya Native Direct', 
+      name: 'Masyanya Custom Player', 
       quality: '1080p HD', 
       isNative: true,
-      // Sample clean direct MP4 stream for native UI testing (Replace with your backend HLS/MP4 stream scraper endpoint)
       url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4' 
     },
     { id: '2embed', name: '2Embed Prime', quality: '1080p / 720p', isNative: false, url: type === 'movie' ? `https://www.2embed.cc/embed/${id}` : `https://www.2embed.cc/embedtv/${id}&s=${season}&e=${episode}` },
@@ -82,6 +88,7 @@ export default function App() {
     { id: 'multimovies', name: 'MultiMovies', quality: '1080p HD', isNative: false, url: type === 'movie' ? `https://multimovies.cloud/embed/movie/${id}` : `https://multimovies.cloud/embed/tv/${id}/${season}/${episode}` },
     { id: 'primewire', name: 'PrimeWire VIP', quality: '720p / 1080p', isNative: false, url: type === 'movie' ? `https://www.primewire.tf/embed/movie?tmdb=${id}` : `https://www.primewire.tf/embed/tv?tmdb=${id}&season=${season}&episode=${episode}` },
     { id: 'gomovies', name: 'GoMovies Stream', quality: '1080p HD', isNative: false, url: type === 'movie' ? `https://gomovies-online.CC/embed/movie/${id}` : `https://gomovies-online.CC/embed/tv/${id}/${season}/${episode}` },
+    { id: 'flixhq', name: 'FlixHQ Mirror', quality: '1080p HD', isNative: false, url: type === 'movie' ? `https://flixhq.to/embed/movie/${id}` : `https://flixhq.to/embed/tv/${id}/${season}/${episode}` },
     { id: 'cineb', name: 'CineB Feed', quality: '1080p HD', isNative: false, url: type === 'movie' ? `https://cineb.rs/embed/movie/${id}` : `https://cineb.rs/embed/tv/${id}/${season}/${episode}` }
   ];
 
@@ -89,16 +96,10 @@ export default function App() {
     setIsCheckingSources(true);
     const sources = getEmbedSources(id, type, season, episode);
     const statusMap = {};
-    let firstWorkingIdx = 0;
-
-    for (let i = 0; i < sources.length; i++) {
-      const src = sources[i];
-      statusMap[src.id] = 'online';
-    }
-
+    sources.forEach(src => { statusMap[src.id] = 'online'; });
     setServerStatuses(statusMap);
     setIsCheckingSources(false);
-    setActiveServer(firstWorkingIdx);
+    setActiveServer(0);
   };
 
   useEffect(() => {
@@ -122,14 +123,11 @@ export default function App() {
         setPopularTV(tvData.results || []);
         setTopRated(topData.results || []);
 
-        if (filteredTrending.length > 0) {
-          setHeroMedia(filteredTrending[0]);
-        }
+        if (filteredTrending.length > 0) setHeroMedia(filteredTrending[0]);
       } catch (error) {
         console.error('Error fetching TMDB data:', error);
       }
     };
-
     fetchContent();
   }, []);
 
@@ -139,13 +137,10 @@ export default function App() {
       setIsSearching(false);
       return;
     }
-
     setIsSearching(true);
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(
-          `${TMDB_BASE_URL}/search/multi?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(searchQuery)}`
-        );
+        const res = await fetch(`${TMDB_BASE_URL}/search/multi?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(searchQuery)}`);
         const data = await res.json();
         setSearchResults((data.results || []).filter(item => item.poster_path || item.backdrop_path));
       } catch (err) {
@@ -154,7 +149,6 @@ export default function App() {
         setIsSearching(false);
       }
     }, 400);
-
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
@@ -165,44 +159,38 @@ export default function App() {
       setActiveServer(0);
       return;
     }
-
     const type = selectedMedia.media_type || (selectedMedia.title ? 'movie' : 'tv');
-    
     const fetchDetails = async () => {
       try {
-        const res = await fetch(
-          `${TMDB_BASE_URL}/${type}/${selectedMedia.id}?api_key=${TMDB_API_KEY}&append_to_response=credits,recommendations`
-        );
+        const res = await fetch(`${TMDB_BASE_URL}/${type}/${selectedMedia.id}?api_key=${TMDB_API_KEY}&append_to_response=credits,recommendations`);
         const data = await res.json();
         setMediaDetails({ ...data, media_type: type });
       } catch (err) {
         console.error('Failed to fetch details:', err);
       }
     };
-
     fetchDetails();
     verifySourcesHealth(selectedMedia.id, type, selectedSeason, selectedEpisode);
   }, [selectedMedia, selectedSeason, selectedEpisode]);
 
   const toggleWatchlist = (media) => {
     const exists = watchlist.some(item => item.id === media.id);
-    if (exists) {
-      setWatchlist(watchlist.filter(item => item.id !== media.id));
-    } else {
-      setWatchlist([...watchlist, media]);
-    }
+    setWatchlist(exists ? watchlist.filter(item => item.id !== media.id) : [...watchlist, media]);
   };
 
   const isSaved = (mediaId) => watchlist.some(item => item.id === mediaId);
 
-  // Native Video Player Controls Handlers
+  // Video Player Control Functions
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+
   const togglePlay = () => {
     if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
-      }
+      if (isPlaying) videoRef.current.pause();
+      else videoRef.current.play();
       setIsPlaying(!isPlaying);
     }
   };
@@ -214,26 +202,44 @@ export default function App() {
     }
   };
 
+  const handleVolumeChange = (e) => {
+    const val = parseFloat(e.target.value);
+    setVolume(val);
+    if (videoRef.current) {
+      videoRef.current.volume = val;
+      setIsMuted(val === 0);
+    }
+  };
+
   const handleTimeUpdate = () => {
     if (videoRef.current) {
-      const currentProgress = (videoRef.current.currentTime / videoRef.current.duration) * 100;
-      setProgress(currentProgress || 0);
+      const cur = videoRef.current.currentTime;
+      const dur = videoRef.current.duration || 1;
+      setProgress((cur / dur) * 100);
+      setCurrentTime(formatTime(cur));
+      setDuration(formatTime(dur));
     }
   };
 
   const handleSeek = (e) => {
-    const seekTime = (e.target.value / 100) * videoRef.current.duration;
-    videoRef.current.currentTime = seekTime;
-    setProgress(e.target.value);
+    const seekPercent = parseFloat(e.target.value);
+    if (videoRef.current) {
+      const seekTime = (seekPercent / 100) * videoRef.current.duration;
+      videoRef.current.currentTime = seekTime;
+      setProgress(seekPercent);
+    }
+  };
+
+  const changeSpeed = (speed) => {
+    setPlaybackSpeed(speed);
+    if (videoRef.current) videoRef.current.playbackRate = speed;
+    setShowSettingsMenu(false);
   };
 
   const requestFullscreenPlayer = () => {
     if (playerWrapperRef.current) {
-      if (playerWrapperRef.current.requestFullscreen) {
-        playerWrapperRef.current.requestFullscreen();
-      } else if (playerWrapperRef.current.webkitRequestFullscreen) {
-        playerWrapperRef.current.webkitRequestFullscreen();
-      }
+      if (playerWrapperRef.current.requestFullscreen) playerWrapperRef.current.requestFullscreen();
+      else if (playerWrapperRef.current.webkitRequestFullscreen) playerWrapperRef.current.webkitRequestFullscreen();
     }
   };
 
@@ -251,15 +257,9 @@ export default function App() {
       <header className="fixed top-0 left-0 right-0 z-40 bg-neutral-950/90 backdrop-blur-md border-b border-white/5 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-auto py-3 flex flex-col md:flex-row items-center justify-between gap-3">
           <div className="flex items-center justify-between w-full md:w-auto gap-4">
-            <button 
-              onClick={() => { setSearchQuery(''); setCurrentTab('all'); }} 
-              className="text-2xl sm:text-3xl font-black tracking-tight focus:outline-none"
-            >
-              <span className="bg-gradient-to-r from-red-500 via-rose-500 to-red-600 bg-clip-text text-transparent">
-                masyanya
-              </span>
+            <button onClick={() => { setSearchQuery(''); setCurrentTab('all'); }} className="text-2xl sm:text-3xl font-black tracking-tight focus:outline-none">
+              <span className="bg-gradient-to-r from-red-500 via-rose-500 to-red-600 bg-clip-text text-transparent">masyanya</span>
             </button>
-
             <nav className="flex items-center gap-1 bg-white/5 p-1 rounded-full border border-white/10 overflow-x-auto max-w-full">
               {[
                 { id: 'all', label: 'Home', icon: Sparkles },
@@ -273,19 +273,15 @@ export default function App() {
                     key={tab.id}
                     onClick={() => { setCurrentTab(tab.id); setSearchQuery(''); }}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
-                      currentTab === tab.id 
-                        ? 'bg-red-600 text-white shadow-md shadow-red-600/20' 
-                        : 'text-neutral-400 hover:text-white hover:bg-white/5'
+                      currentTab === tab.id ? 'bg-red-600 text-white shadow-md shadow-red-600/20' : 'text-neutral-400 hover:text-white hover:bg-white/5'
                     }`}
                   >
-                    <Icon className="w-3.5 h-3.5" />
-                    {tab.label}
+                    <Icon className="w-3.5 h-3.5" /> {tab.label}
                   </button>
                 );
               })}
             </nav>
           </div>
-
           <div className="relative w-full md:max-w-xs">
             <div className="relative flex items-center">
               <Search className="absolute left-3.5 w-4 h-4 text-neutral-400" />
@@ -310,21 +306,15 @@ export default function App() {
         {searchQuery ? (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2">
             <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-              <Search className="w-5 h-5 text-red-500" />
-              Search Results for <span className="text-red-500">&quot;{searchQuery}&quot;</span>
+              <Search className="w-5 h-5 text-red-500" /> Search Results for <span className="text-red-500">&quot;{searchQuery}&quot;</span>
             </h2>
-
             {isSearching ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {[...Array(12)].map((_, i) => (
-                  <div key={i} className="aspect-[2/3] rounded-xl bg-neutral-900 animate-pulse" />
-                ))}
+                {[...Array(12)].map((_, i) => <div key={i} className="aspect-[2/3] rounded-xl bg-neutral-900 animate-pulse" />)}
               </div>
             ) : searchResults.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {searchResults.map(item => (
-                  <MediaCard key={item.id} media={item} onClick={() => setSelectedMedia(item)} />
-                ))}
+                {searchResults.map(item => <MediaCard key={item.id} media={item} onClick={() => setSelectedMedia(item)} />)}
               </div>
             ) : (
               <div className="text-center py-20 text-neutral-500">No titles or series found. Try another search term!</div>
@@ -332,14 +322,10 @@ export default function App() {
           </div>
         ) : currentTab === 'watchlist' ? (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2">
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-              <Bookmark className="w-6 h-6 text-red-500" /> My Saved Watchlist
-            </h2>
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2"><Bookmark className="w-6 h-6 text-red-500" /> My Saved Watchlist</h2>
             {watchlist.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {watchlist.map(item => (
-                  <MediaCard key={item.id} media={item} onClick={() => setSelectedMedia(item)} />
-                ))}
+                {watchlist.map(item => <MediaCard key={item.id} media={item} onClick={() => setSelectedMedia(item)} />)}
               </div>
             ) : (
               <div className="text-center py-20 text-neutral-500 border border-dashed border-white/10 rounded-2xl">
@@ -352,60 +338,28 @@ export default function App() {
             {heroMedia && (
               <div className="relative w-full h-[65vh] sm:h-[70vh] min-h-[420px] max-h-[750px] mb-8 overflow-hidden">
                 <div className="absolute inset-0">
-                  <img
-                    src={`${IMAGE_BASE_URL}${heroMedia.backdrop_path}`}
-                    alt={heroMedia.title || heroMedia.name}
-                    className="w-full h-full object-cover object-center scale-105 filter brightness-90"
-                  />
+                  <img src={`${IMAGE_BASE_URL}${heroMedia.backdrop_path}`} alt={heroMedia.title || heroMedia.name} className="w-full h-full object-cover object-center scale-105 filter brightness-90" />
                   <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/40 to-transparent" />
                   <div className="absolute inset-0 bg-gradient-to-r from-neutral-950 via-neutral-950/60 to-transparent" />
                 </div>
-
                 <div className="relative max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex flex-col justify-end pb-12">
                   <div className="max-w-2xl space-y-4">
                     <div className="flex items-center gap-3">
-                      <span className="px-3 py-1 rounded-full bg-red-600/90 text-white text-xs font-semibold uppercase tracking-wider backdrop-blur-sm">
-                        Trending #1
-                      </span>
+                      <span className="px-3 py-1 rounded-full bg-red-600/90 text-white text-xs font-semibold uppercase tracking-wider backdrop-blur-sm">Trending #1</span>
                       <span className="flex items-center gap-1 text-xs font-medium text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-full border border-amber-400/20">
-                        <Star className="w-3.5 h-3.5 fill-current" />
-                        {heroMedia.vote_average?.toFixed(1)}
+                        <Star className="w-3.5 h-3.5 fill-current" /> {heroMedia.vote_average?.toFixed(1)}
                       </span>
                     </div>
-
-                    <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
-                      {heroMedia.title || heroMedia.name}
-                    </h1>
-
-                    <p className="text-sm sm:text-base text-neutral-300 line-clamp-3 leading-relaxed">
-                      {heroMedia.overview}
-                    </p>
-
+                    <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">{heroMedia.title || heroMedia.name}</h1>
+                    <p className="text-sm sm:text-base text-neutral-300 line-clamp-3 leading-relaxed">{heroMedia.overview}</p>
                     <div className="flex flex-wrap items-center gap-3 pt-2">
-                      <button
-                        onClick={() => setSelectedMedia(heroMedia)}
-                        className="flex items-center gap-2.5 px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold transition-all shadow-lg shadow-red-600/30 hover:scale-105 active:scale-95"
-                      >
-                        <Play className="w-5 h-5 fill-current" />
-                        Watch Now
+                      <button onClick={() => setSelectedMedia(heroMedia)} className="flex items-center gap-2.5 px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold transition-all shadow-lg shadow-red-600/30 hover:scale-105 active:scale-95">
+                        <Play className="w-5 h-5 fill-current" /> Watch Now
                       </button>
-
-                      <button
-                        onClick={() => setSelectedMedia(heroMedia)}
-                        className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium backdrop-blur-md transition-all border border-white/10"
-                      >
-                        <Info className="w-5 h-5" />
-                        More Info
+                      <button onClick={() => setSelectedMedia(heroMedia)} className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium backdrop-blur-md transition-all border border-white/10">
+                        <Info className="w-5 h-5" /> More Info
                       </button>
-
-                      <button
-                        onClick={() => toggleWatchlist(heroMedia)}
-                        className={`p-3 rounded-xl transition-all border ${
-                          isSaved(heroMedia.id)
-                            ? 'bg-red-600/20 border-red-500 text-red-500'
-                            : 'bg-white/10 hover:bg-white/20 border-white/10 text-white'
-                        }`}
-                      >
+                      <button onClick={() => toggleWatchlist(heroMedia)} className={`p-3 rounded-xl transition-all border ${isSaved(heroMedia.id) ? 'bg-red-600/20 border-red-500 text-red-500' : 'bg-white/10 hover:bg-white/20 border-white/10 text-white'}`}>
                         <Heart className={`w-5 h-5 ${isSaved(heroMedia.id) ? 'fill-current' : ''}`} />
                       </button>
                     </div>
@@ -413,7 +367,6 @@ export default function App() {
                 </div>
               </div>
             )}
-
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
               {currentTab === 'all' && (
                 <>
@@ -423,25 +376,19 @@ export default function App() {
                   <MediaSection title="Top Rated Classics" items={topRated} onSelect={setSelectedMedia} />
                 </>
               )}
-
               {currentTab === 'movie' && (
                 <>
                   <MediaSection title="Popular Movies" items={popularMovies} onSelect={setSelectedMedia} />
                   <MediaSection title="Top Rated Movies" items={topRated} onSelect={setSelectedMedia} />
                 </>
               )}
-
-              {currentTab === 'tv' && (
-                <>
-                  <MediaSection title="Trending TV Series" items={popularTV} onSelect={setSelectedMedia} />
-                </>
-              )}
+              {currentTab === 'tv' && <MediaSection title="Trending TV Series" items={popularTV} onSelect={setSelectedMedia} />}
             </div>
           </>
         )}
       </main>
 
-      {/* Media Stream Modal featuring Masyanya Native Player UI OR Hoster Iframe Fallback */}
+      {/* Media Stream Modal with Full Custom Player UI (Settings, Captions, Speed, Volume) */}
       {selectedMedia && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-neutral-950/95 backdrop-blur-xl overflow-y-auto">
           <div className="relative w-full max-w-5xl bg-neutral-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden my-auto">
@@ -453,9 +400,8 @@ export default function App() {
             </button>
 
             {/* Video Player Display Container */}
-            <div ref={playerWrapperRef} className="relative aspect-video bg-black w-full overflow-hidden group">
+            <div ref={playerWrapperRef} className="relative aspect-video bg-black w-full overflow-hidden group select-none">
               {activeSource?.isNative ? (
-                /* Native Custom Player UI (Your Website's Controls, Zero Hoster Ads) */
                 <div className="relative w-full h-full flex items-center justify-center bg-neutral-950">
                   <video
                     ref={videoRef}
@@ -466,34 +412,104 @@ export default function App() {
                     onClick={togglePlay}
                   />
 
-                  {/* Custom Overlay Controls Bar */}
-                  <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-2 z-20">
+                  {/* Fully Loaded Custom Player Controls Overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/95 via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-2.5 z-20">
+                    {/* Scrub Bar */}
                     <input
                       type="range"
                       min="0"
                       max="100"
                       value={progress}
                       onChange={handleSeek}
-                      className="w-full h-1 bg-white/30 rounded-lg appearance-none cursor-pointer accent-red-600"
+                      className="w-full h-1.5 bg-white/30 rounded-lg appearance-none cursor-pointer accent-red-600 hover:h-2 transition-all"
                     />
 
                     <div className="flex items-center justify-between">
+                      {/* Left Controls */}
                       <div className="flex items-center gap-4">
                         <button onClick={togglePlay} className="text-white hover:text-red-500 transition-colors">
-                          {isPlaying ? <Pause size={20} /> : <Play size={20} className="fill-current" />}
+                          {isPlaying ? <Pause size={22} /> : <Play size={22} className="fill-current" />}
                         </button>
 
-                        <button onClick={toggleMute} className="text-white hover:text-red-500 transition-colors">
-                          {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
-                        </button>
+                        <div className="flex items-center gap-2 group/vol">
+                          <button onClick={toggleMute} className="text-white hover:text-red-500 transition-colors">
+                            {isMuted || volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
+                          </button>
+                          <input
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.05"
+                            value={isMuted ? 0 : volume}
+                            onChange={handleVolumeChange}
+                            className="w-16 h-1 bg-white/30 rounded-lg appearance-none cursor-pointer accent-red-600"
+                          />
+                        </div>
 
                         <span className="text-xs font-medium text-neutral-300">
-                          {selectedMedia.title || selectedMedia.name} ({activeSource.name})
+                          {currentTime} / {duration}
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-3">
-                        <button onClick={requestFullscreenPlayer} className="text-white hover:text-red-500 transition-colors">
+                      {/* Right Controls (Captions, Settings, Fullscreen) */}
+                      <div className="flex items-center gap-4 relative">
+                        {/* Captions Toggle Button */}
+                        <div className="relative">
+                          <button 
+                            onClick={() => { setShowCaptionsMenu(!showCaptionsMenu); setShowSettingsMenu(false); }}
+                            className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg transition-all ${activeCaption !== 'Off' ? 'bg-red-600 text-white' : 'text-neutral-300 hover:text-white bg-white/5'}`}
+                            title="Subtitles & Captions"
+                          >
+                            <Subtitles size={16} />
+                            <span className="hidden sm:inline">{activeCaption}</span>
+                          </button>
+
+                          {/* Captions Popup Menu */}
+                          {showCaptionsMenu && (
+                            <div className="absolute bottom-10 right-0 bg-neutral-900 border border-white/10 rounded-xl shadow-2xl p-2 w-36 z-30 text-xs">
+                              <div className="text-[10px] font-bold text-neutral-400 px-2 py-1 uppercase tracking-wider">Subtitles</div>
+                              {['Off', 'English', 'Arabic', 'Spanish', 'French'].map(lang => (
+                                <button
+                                  key={lang}
+                                  onClick={() => { setActiveCaption(lang); setShowCaptionsMenu(false); }}
+                                  className={`w-full text-left px-2 py-1.5 rounded-lg transition-all ${activeCaption === lang ? 'bg-red-600 text-white font-bold' : 'text-neutral-300 hover:bg-white/10'}`}
+                                >
+                                  {lang}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Settings Button (Playback Speed) */}
+                        <div className="relative">
+                          <button 
+                            onClick={() => { setShowSettingsMenu(!showSettingsMenu); setShowCaptionsMenu(false); }}
+                            className="text-neutral-300 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10"
+                            title="Player Settings"
+                          >
+                            <Settings size={20} />
+                          </button>
+
+                          {/* Settings Popup Menu */}
+                          {showSettingsMenu && (
+                            <div className="absolute bottom-10 right-0 bg-neutral-900 border border-white/10 rounded-xl shadow-2xl p-2 w-40 z-30 text-xs">
+                              <div className="text-[10px] font-bold text-neutral-400 px-2 py-1 uppercase tracking-wider">Playback Speed</div>
+                              {[0.5, 0.75, 1, 1.25, 1.5, 2].map(speed => (
+                                <button
+                                  key={speed}
+                                  onClick={() => changeSpeed(speed)}
+                                  className={`w-full text-left px-2.5 py-1.5 rounded-lg transition-all flex items-center justify-between ${playbackSpeed === speed ? 'bg-red-600 text-white font-bold' : 'text-neutral-300 hover:bg-white/10'}`}
+                                >
+                                  <span>{speed}x</span>
+                                  {playbackSpeed === speed && <CheckCircle2 size={12} />}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        <button onClick={requestFullscreenPlayer} className="text-neutral-300 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10" title="Fullscreen">
                           <Maximize size={18} />
                         </button>
                       </div>
@@ -501,15 +517,8 @@ export default function App() {
                   </div>
                 </div>
               ) : (
-                /* Standard Hoster Iframe Fallback with Clean Tab Option if blocked */
                 <div className="relative w-full h-full">
-                  <iframe
-                    src={activeSource.url}
-                    className="w-full h-full border-0 absolute inset-0"
-                    allowFullScreen
-                    allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-                    title="Stream Player"
-                  />
+                  <iframe src={activeSource.url} className="w-full h-full border-0 absolute inset-0" allowFullScreen allow="autoplay; fullscreen; encrypted-media; picture-in-picture" title="Stream Player" />
                 </div>
               )}
             </div>
@@ -522,7 +531,7 @@ export default function App() {
                     <Server className="w-4 h-4 text-red-500" /> Stock Sources (20 Available):
                     {isCheckingSources && <RefreshCw size={12} className="animate-spin text-red-500 ml-1" />}
                   </div>
-                  <span className="text-[11px] text-neutral-500">Switch between Native UI & Mirrors</span>
+                  <span className="text-[11px] text-neutral-500">Switch to Masyanya Custom Player for UI</span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-48 overflow-y-auto pr-1">
@@ -531,9 +540,7 @@ export default function App() {
                       key={srv.id}
                       onClick={() => setActiveServer(idx)}
                       className={`flex flex-col items-start p-2 rounded-lg border text-left transition-all ${
-                        activeServer === idx
-                          ? 'bg-red-600/20 border-red-500 text-white shadow-lg shadow-red-600/20'
-                          : 'bg-white/5 border-white/5 text-neutral-400 hover:text-white hover:bg-white/10'
+                        activeServer === idx ? 'bg-red-600/20 border-red-500 text-white shadow-lg shadow-red-600/20' : 'bg-white/5 border-white/5 text-neutral-400 hover:text-white hover:bg-white/10'
                       }`}
                     >
                       <div className="flex items-center justify-between w-full">
@@ -551,29 +558,19 @@ export default function App() {
               {mediaDetails && (mediaDetails.media_type === 'tv' || !selectedMedia.title) && mediaDetails.seasons && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-neutral-950/50 p-4 rounded-xl border border-white/5">
                   <div>
-                    <label className="block text-xs font-semibold text-neutral-400 mb-1.5 uppercase tracking-wider">
-                      Select Season
-                    </label>
+                    <label className="block text-xs font-semibold text-neutral-400 mb-1.5 uppercase tracking-wider">Select Season</label>
                     <select
                       value={selectedSeason}
-                      onChange={(e) => {
-                        setSelectedSeason(Number(e.target.value));
-                        setSelectedEpisode(1);
-                      }}
+                      onChange={(e) => { setSelectedSeason(Number(e.target.value)); setSelectedEpisode(1); }}
                       className="w-full bg-neutral-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-neutral-200 focus:outline-none focus:border-red-500"
                     >
                       {mediaDetails.seasons.filter(s => s.season_number > 0).map(s => (
-                        <option key={s.id} value={s.season_number}>
-                          Season {s.season_number} ({s.episode_count} Episodes)
-                        </option>
+                        <option key={s.id} value={s.season_number}>Season {s.season_number} ({s.episode_count} Episodes)</option>
                       ))}
                     </select>
                   </div>
-
                   <div>
-                    <label className="block text-xs font-semibold text-neutral-400 mb-1.5 uppercase tracking-wider">
-                      Episode Number
-                    </label>
+                    <label className="block text-xs font-semibold text-neutral-400 mb-1.5 uppercase tracking-wider">Episode Number</label>
                     <input
                       type="number"
                       min="1"
@@ -588,33 +585,22 @@ export default function App() {
 
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-4">
-                  <h2 className="text-2xl font-bold text-white">
-                    {selectedMedia.title || selectedMedia.name}
-                  </h2>
+                  <h2 className="text-2xl font-bold text-white">{selectedMedia.title || selectedMedia.name}</h2>
                   <button
                     onClick={() => toggleWatchlist(selectedMedia)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all border ${
-                      isSaved(selectedMedia.id)
-                        ? 'bg-red-600/20 border-red-500 text-red-500'
-                        : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'
-                    }`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all border ${isSaved(selectedMedia.id) ? 'bg-red-600/20 border-red-500 text-red-500' : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'}`}
                   >
                     <Bookmark className={`w-4 h-4 ${isSaved(selectedMedia.id) ? 'fill-current' : ''}`} />
                     {isSaved(selectedMedia.id) ? 'Saved in Watchlist' : 'Add to Watchlist'}
                   </button>
                 </div>
-
                 <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-neutral-400">
                   <span className="flex items-center gap-1 text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
-                    <Star className="w-3.5 h-3.5 fill-current" />
-                    {selectedMedia.vote_average?.toFixed(1)} / 10
+                    <Star className="w-3.5 h-3.5 fill-current" /> {selectedMedia.vote_average?.toFixed(1)} / 10
                   </span>
                   <span>{selectedMedia.release_date || selectedMedia.first_air_date}</span>
                 </div>
-
-                <p className="text-sm text-neutral-300 leading-relaxed pt-2">
-                  {selectedMedia.overview || 'No overview summary available for this title.'}
-                </p>
+                <p className="text-sm text-neutral-300 leading-relaxed pt-2">{selectedMedia.overview || 'No overview summary available for this title.'}</p>
               </div>
             </div>
           </div>
@@ -626,39 +612,24 @@ export default function App() {
 
 function MediaSection({ title, items, onSelect }) {
   if (!items || items.length === 0) return null;
-
   return (
     <section className="space-y-4">
       <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white flex items-center gap-2">
-        <span className="w-2 h-2 rounded-full bg-red-600" />
-        {title}
+        <span className="w-2 h-2 rounded-full bg-red-600" /> {title}
       </h2>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        {items.slice(0, 12).map((item) => (
-          <MediaCard key={item.id} media={item} onClick={() => onSelect(item)} />
-        ))}
+        {items.slice(0, 12).map((item) => <MediaCard key={item.id} media={item} onClick={() => onSelect(item)} />)}
       </div>
     </section>
   );
 }
 
 function MediaCard({ media, onClick }) {
-  const posterUrl = media.poster_path 
-    ? `${POSTER_BASE_URL}${media.poster_path}` 
-    : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=500&q=80';
-
+  const posterUrl = media.poster_path ? `${POSTER_BASE_URL}${media.poster_path}` : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=500&q=80';
   return (
-    <div
-      onClick={onClick}
-      className="group relative flex flex-col cursor-pointer bg-neutral-900 rounded-xl overflow-hidden border border-white/5 hover:border-red-500/50 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-red-600/10"
-    >
+    <div onClick={onClick} className="group relative flex flex-col cursor-pointer bg-neutral-900 rounded-xl overflow-hidden border border-white/5 hover:border-red-500/50 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-red-600/10">
       <div className="relative aspect-[2/3] w-full bg-neutral-950 overflow-hidden">
-        <img
-          src={posterUrl}
-          alt={media.title || media.name}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-          loading="lazy"
-        />
+        <img src={posterUrl} alt={media.title || media.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" loading="lazy" />
         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
           <div className="w-12 h-12 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-600/50 transform scale-75 group-hover:scale-100 transition-transform">
             <Play className="w-6 h-6 fill-current ml-0.5" />
@@ -666,19 +637,13 @@ function MediaCard({ media, onClick }) {
         </div>
         {media.vote_average > 0 && (
           <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/70 backdrop-blur-md px-2 py-0.5 rounded-md text-[10px] font-bold text-amber-400 border border-white/10">
-            <Star className="w-3 h-3 fill-current" />
-            {media.vote_average.toFixed(1)}
+            <Star className="w-3 h-3 fill-current" /> {media.vote_average.toFixed(1)}
           </div>
         )}
       </div>
-
       <div className="p-3 flex flex-col flex-1 justify-between bg-neutral-900">
-        <h3 className="text-xs font-bold text-neutral-200 line-clamp-1 group-hover:text-red-500 transition-colors">
-          {media.title || media.name}
-        </h3>
-        <p className="text-[10px] text-neutral-500 mt-1 font-medium">
-          {(media.release_date || media.first_air_date || '').substring(0, 4) || 'N/A'}
-        </p>
+        <h3 className="text-xs font-bold text-neutral-200 line-clamp-1 group-hover:text-red-500 transition-colors">{media.title || media.name}</h3>
+        <p className="text-[10px] text-neutral-500 mt-1 font-medium">{(media.release_date || media.first_air_date || '').substring(0, 4) || 'N/A'}</p>
       </div>
     </div>
   );
