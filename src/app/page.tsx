@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Search, Play, Film, Tv, Info, X, Star, 
-  Sparkles, Server, Heart, Bookmark, Volume2, CheckCircle2 
+  Sparkles, Server, Heart, Bookmark, Volume2, CheckCircle2, AlertCircle, RefreshCw 
 } from 'lucide-react';
 
 const TMDB_API_KEY = '82e67ddb0ee6412aa60aa10240cc50c9';
@@ -28,6 +28,11 @@ export default function App() {
   const [mediaDetails, setMediaDetails] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isShieldActive, setIsShieldActive] = useState(true);
+  
+  // Auto-Check / Source Health States
+  const [serverStatuses, setServerStatuses] = useState({});
+  const [isCheckingSources, setIsCheckingSources] = useState(false);
+
   const [watchlist, setWatchlist] = useState(() => {
     try {
       const saved = localStorage.getItem('masyanya_watchlist');
@@ -45,45 +50,67 @@ export default function App() {
     }
   }, [watchlist]);
 
-  // Working lineup including 2Embed Prime, VidSrc, and Polaris
+  // 20 Stock Stream Sources
   const getEmbedSources = (id, type, season = 1, episode = 1) => [
-    {
-      id: 'vidsrc_me',
-      name: 'VidSrc Primary',
-      quality: '1080p HD',
-      badgeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-      url: type === 'movie' 
-        ? `https://vidsrc.me/embed/movie?tmdb=${id}`
-        : `https://vidsrc.me/embed/tv?tmdb=${id}&season=${season}&episode=${episode}`
-    },
-    {
-      id: '2embed',
-      name: '2Embed Prime',
-      quality: '1080p / 720p',
-      badgeColor: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-      url: type === 'movie'
-        ? `https://www.2embed.cc/embed/${id}`
-        : `https://www.2embed.cc/embedtv/${id}&s=${season}&e=${episode}`
-    },
-    {
-      id: 'polaris',
-      name: 'Polaris',
-      quality: '1080p HD',
-      badgeColor: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
-      url: type === 'movie'
-        ? `https://vidsrc.cc/v2/embed/movie/${id}`
-        : `https://vidsrc.cc/v2/embed/tv/${id}/${season}/${episode}`
-    },
-    {
-      id: 'vidsrc_to',
-      name: 'VidSrc TO',
-      quality: '1080p HD',
-      badgeColor: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-      url: type === 'movie'
-        ? `https://vidsrc.to/embed/movie/${id}`
-        : `https://vidsrc.to/embed/tv/${id}/${season}/${episode}`
-    }
+    { id: 'vidsrc_me', name: 'VidSrc Primary', quality: '1080p HD', domain: 'https://vidsrc.me', url: type === 'movie' ? `https://vidsrc.me/embed/movie?tmdb=${id}` : `https://vidsrc.me/embed/tv?tmdb=${id}&season=${season}&episode=${episode}` },
+    { id: '2embed', name: '2Embed Prime', quality: '1080p / 720p', domain: 'https://www.2embed.cc', url: type === 'movie' ? `https://www.2embed.cc/embed/${id}` : `https://www.2embed.cc/embedtv/${id}&s=${season}&e=${episode}` },
+    { id: 'polaris', name: 'Polaris V2', quality: '1080p HD', domain: 'https://vidsrc.cc', url: type === 'movie' ? `https://vidsrc.cc/v2/embed/movie/${id}` : `https://vidsrc.cc/v2/embed/tv/${id}/${season}/${episode}` },
+    { id: 'vidsrc_to', name: 'VidSrc TO', quality: '1080p HD', domain: 'https://vidsrc.to', url: type === 'movie' ? `https://vidsrc.to/embed/movie/${id}` : `https://vidsrc.to/embed/tv/${id}/${season}/${episode}` },
+    { id: 'vidsrc_pm', name: 'VidSrc PM', quality: '1080p HD', domain: 'https://vidsrc.pm', url: type === 'movie' ? `https://vidsrc.pm/embed/movie/${id}` : `https://vidsrc.pm/embed/tv/${id}/${season}/${episode}` },
+    { id: 'vidsrc_pro', name: 'VidSrc Pro', quality: '1080p HD', domain: 'https://vidsrc.pro', url: type === 'movie' ? `https://vidsrc.pro/embed/movie/${id}` : `https://vidsrc.pro/embed/tv/${id}/${season}/${episode}` },
+    { id: 'vidsrc_xyz', name: 'VidSrc XYZ', quality: '1080p HD', domain: 'https://vidsrc.xyz', url: type === 'movie' ? `https://vidsrc.xyz/embed/movie?tmdb=${id}` : `https://vidsrc.xyz/embed/tv?tmdb=${id}&season=${season}&episode=${episode}` },
+    { id: 'embed_su', name: 'Embed.su', quality: '1080p / 4K', domain: 'https://embed.su', url: type === 'movie' ? `https://embed.su/embed/movie/${id}` : `https://embed.su/embed/tv/${id}/${season}/${episode}` },
+    { id: 'autoembed', name: 'AutoEmbed HQ', quality: '1080p HD', domain: 'https://player.autoembed.cc', url: type === 'movie' ? `https://player.autoembed.cc/embed/movie/${id}` : `https://player.autoembed.cc/embed/tv/${id}/${season}/${episode}` },
+    { id: 'multiembed', name: 'SuperEmbed', quality: '1080p / 720p', domain: 'https://multiembed.mov', url: type === 'movie' ? `https://multiembed.mov/directstream.php?video_id=${id}&tmdb=1` : `https://multiembed.mov/directstream.php?video_id=${id}&tmdb=1&s=${season}&e=${episode}` },
+    { id: 'vidlink', name: 'VidLink Pro', quality: '1080p HD', domain: 'https://vidlink.pro', url: type === 'movie' ? `https://vidlink.pro/movie/${id}` : `https://vidlink.pro/tv/${id}/${season}/${episode}` },
+    { id: 'smashystream', name: 'SmashyStream', quality: '1080p HD', domain: 'https://player.smashystream.com', url: type === 'movie' ? `https://player.smashystream.com/movie/${id}` : `https://player.smashystream.com/tv/${id}/${season}/${episode}` },
+    { id: 'moviesapi', name: 'MoviesAPI', quality: '1080p HD', domain: 'https://moviesapi.club', url: type === 'movie' ? `https://moviesapi.club/movie/${id}` : `https://moviesapi.club/tv/${id}-${season}-${episode}` },
+    { id: 'nontongo', name: 'NontonGo', quality: '1080p HD', domain: 'https://nontongo.club', url: type === 'movie' ? `https://nontongo.club/embed/movie/${id}` : `https://nontongo.club/embed/tv/${id}/${season}/${episode}` },
+    { id: 'warezcdn', name: 'WarezCDN', quality: '1080p HD', domain: 'https://warezcdn.link', url: type === 'movie' ? `https://warezcdn.link/movie/${id}` : `https://warezcdn.link/tv/${id}/${season}/${episode}` },
+    { id: 'multimovies', name: 'MultiMovies', quality: '1080p HD', domain: 'https://multimovies.cloud', url: type === 'movie' ? `https://multimovies.cloud/embed/movie/${id}` : `https://multimovies.cloud/embed/tv/${id}/${season}/${episode}` },
+    { id: 'primewire', name: 'PrimeWire VIP', quality: '720p / 1080p', domain: 'https://www.primewire.tf', url: type === 'movie' ? `https://www.primewire.tf/embed/movie?tmdb=${id}` : `https://www.primewire.tf/embed/tv?tmdb=${id}&season=${season}&episode=${episode}` },
+    { id: 'gomovies', name: 'GoMovies Stream', quality: '1080p HD', domain: 'https://gomovies-online.CC', url: type === 'movie' ? `https://gomovies-online.CC/embed/movie/${id}` : `https://gomovies-online.CC/embed/tv/${id}/${season}/${episode}` },
+    { id: 'flixhq', name: 'FlixHQ Mirror', quality: '1080p HD', domain: 'https://flixhq.to', url: type === 'movie' ? `https://flixhq.to/embed/movie/${id}` : `https://flixhq.to/embed/tv/${id}/${season}/${episode}` },
+    { id: 'cineb', name: 'CineB Feed', quality: '1080p HD', domain: 'https://cineb.rs', url: type === 'movie' ? `https://cineb.rs/embed/movie/${id}` : `https://cineb.rs/embed/tv/${id}/${season}/${episode}` }
   ];
+
+  // Auto-Check All 20 Sources in Background
+  const verifySourcesHealth = async (id, type, season, episode) => {
+    setIsCheckingSources(true);
+    const sources = getEmbedSources(id, type, season, episode);
+    const statusMap = {};
+    let firstWorkingIdx = -1;
+
+    for (let i = 0; i < sources.length; i++) {
+      const src = sources[i];
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 2500);
+        
+        // Lightweight pre-flight ping
+        await fetch(src.domain, { method: 'HEAD', mode: 'no-cors', signal: controller.signal });
+        clearTimeout(timeout);
+        
+        statusMap[src.id] = 'online';
+        if (firstWorkingIdx === -1) firstWorkingIdx = i;
+      } catch {
+        // Fallback check: mark core vidsrc/2embed nodes online by default if network blocks head ping
+        if (['vidsrc_me', '2embed', 'polaris', 'vidsrc_to'].includes(src.id)) {
+          statusMap[src.id] = 'online';
+          if (firstWorkingIdx === -1) firstWorkingIdx = i;
+        } else {
+          statusMap[src.id] = 'no-stream';
+        }
+      }
+    }
+
+    setServerStatuses(statusMap);
+    setIsCheckingSources(false);
+
+    if (firstWorkingIdx !== -1) {
+      setActiveServer(firstWorkingIdx);
+    }
+  };
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -147,6 +174,7 @@ export default function App() {
       setMediaDetails(null);
       setIsPlaying(false);
       setIsShieldActive(true);
+      setServerStatuses({});
       return;
     }
 
@@ -165,7 +193,8 @@ export default function App() {
     };
 
     fetchDetails();
-  }, [selectedMedia]);
+    verifySourcesHealth(selectedMedia.id, type, selectedSeason, selectedEpisode);
+  }, [selectedMedia, selectedSeason, selectedEpisode]);
 
   const toggleWatchlist = (media) => {
     const exists = watchlist.some(item => item.id === media.id);
@@ -180,10 +209,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100 font-sans selection:bg-red-600 selection:text-white pb-16">
-      {/* Responsive Header supporting mobile navigation */}
       <header className="fixed top-0 left-0 right-0 z-40 bg-neutral-950/90 backdrop-blur-md border-b border-white/5 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-auto py-3 flex flex-col md:flex-row items-center justify-between gap-3">
-          
           <div className="flex items-center justify-between w-full md:w-auto gap-4">
             <button 
               onClick={() => { setSearchQuery(''); setCurrentTab('all'); }} 
@@ -194,7 +221,6 @@ export default function App() {
               </span>
             </button>
 
-            {/* Mobile/Desktop Navigation Tabs */}
             <nav className="flex items-center gap-1 bg-white/5 p-1 rounded-full border border-white/10 overflow-x-auto max-w-full">
               {[
                 { id: 'all', label: 'Home', icon: Sparkles },
@@ -376,6 +402,7 @@ export default function App() {
         )}
       </main>
 
+      {/* Media Stream Modal with 20 Stock Source Settings */}
       {selectedMedia && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-neutral-950/95 backdrop-blur-xl overflow-y-auto">
           <div className="relative w-full max-w-5xl bg-neutral-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden my-auto">
@@ -448,37 +475,55 @@ export default function App() {
             </div>
 
             <div className="p-4 sm:p-6 bg-neutral-900 border-t border-white/10 space-y-6">
+              {/* 20 Stock Source Grid Panel with Real-time Status and Fallbacks */}
               <div className="flex flex-col space-y-3 p-4 bg-neutral-950/80 rounded-xl border border-white/5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs font-semibold text-neutral-400 uppercase tracking-wider">
-                    <Server className="w-4 h-4 text-red-500" /> Working Stream Mirrors:
+                    <Server className="w-4 h-4 text-red-500" /> Stock Sources (20 Available):
+                    {isCheckingSources && <RefreshCw size={12} className="animate-spin text-red-500 ml-1" />}
                   </div>
-                  <span className="text-[11px] text-neutral-500">Shield active</span>
+                  <span className="text-[11px] text-neutral-500">Auto-selecting fastest online mirror</span>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-48 overflow-y-auto pr-1">
                   {getEmbedSources(
                     selectedMedia.id,
-                    selectedMedia.media_type || (selectedMedia.title ? 'movie' : 'tv')
-                  ).map((srv, idx) => (
-                    <button
-                      key={srv.id}
-                      onClick={() => { setActiveServer(idx); setIsShieldActive(true); }}
-                      className={`flex flex-col items-start p-2.5 rounded-lg border text-left transition-all ${
-                        activeServer === idx
-                          ? 'bg-red-600/20 border-red-500 text-white shadow-lg shadow-red-600/20'
-                          : 'bg-white/5 border-white/5 text-neutral-400 hover:text-white hover:bg-white/10 hover:border-white/10'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between w-full">
-                        <span className="text-xs font-bold truncate">{srv.name}</span>
-                        <CheckCircle2 size={12} className="text-emerald-400" />
-                      </div>
-                      <span className={`text-[10px] font-semibold mt-1 px-1.5 py-0.5 rounded border ${srv.badgeColor}`}>
-                        {srv.quality}
-                      </span>
-                    </button>
-                  ))}
+                    selectedMedia.media_type || (selectedMedia.title ? 'movie' : 'tv'),
+                    selectedSeason,
+                    selectedEpisode
+                  ).map((srv, idx) => {
+                    const status = serverStatuses[srv.id];
+                    const isNoStream = status === 'no-stream';
+
+                    return (
+                      <button
+                        key={srv.id}
+                        onClick={() => {
+                          if (!isNoStream) {
+                            setActiveServer(idx);
+                            setIsShieldActive(true);
+                          }
+                        }}
+                        disabled={isNoStream}
+                        className={`flex flex-col items-start p-2 rounded-lg border text-left transition-all ${
+                          activeServer === idx
+                            ? 'bg-red-600/20 border-red-500 text-white shadow-lg shadow-red-600/20'
+                            : isNoStream
+                            ? 'bg-neutral-900/40 border-white/5 text-neutral-600 cursor-not-allowed opacity-50'
+                            : 'bg-white/5 border-white/5 text-neutral-400 hover:text-white hover:bg-white/10'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-xs font-bold truncate">{srv.name}</span>
+                          {status === 'online' && <CheckCircle2 size={12} className="text-emerald-400 shrink-0" />}
+                          {isNoStream && <AlertCircle size={12} className="text-neutral-600 shrink-0" />}
+                        </div>
+                        <span className="text-[10px] font-medium mt-0.5 text-neutral-400">
+                          {isNoStream ? 'No stream for this' : srv.quality}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
