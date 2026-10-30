@@ -52,10 +52,10 @@ export default function App() {
     }
   }, [watchlist]);
 
-  // 20 Stock Stream Sources with 2Embed Prime set as Primary (#1)
+  // 20 Stock Stream Sources with VidSrc Primary set as #1 Primary
   const getEmbedSources = (id, type, season = 1, episode = 1) => [
-    { id: '2embed', name: '2Embed Prime', quality: '1080p / 720p', domain: 'https://www.2embed.cc', url: type === 'movie' ? `https://www.2embed.cc/embed/${id}` : `https://www.2embed.cc/embedtv/${id}&s=${season}&e=${episode}` },
     { id: 'vidsrc_me', name: 'VidSrc Primary', quality: '1080p HD', domain: 'https://vidsrc.me', url: type === 'movie' ? `https://vidsrc.me/embed/movie?tmdb=${id}` : `https://vidsrc.me/embed/tv?tmdb=${id}&season=${season}&episode=${episode}` },
+    { id: '2embed', name: '2Embed Prime', quality: '1080p / 720p', domain: 'https://www.2embed.cc', url: type === 'movie' ? `https://www.2embed.cc/embed/${id}` : `https://www.2embed.cc/embedtv/${id}&s=${season}&e=${episode}` },
     { id: 'polaris', name: 'Polaris V2', quality: '1080p HD', domain: 'https://vidsrc.cc', url: type === 'movie' ? `https://vidsrc.cc/v2/embed/movie/${id}` : `https://vidsrc.cc/v2/embed/tv/${id}/${season}/${episode}` },
     { id: 'vidsrc_to', name: 'VidSrc TO', quality: '1080p HD', domain: 'https://vidsrc.to', url: type === 'movie' ? `https://vidsrc.to/embed/movie/${id}` : `https://vidsrc.to/embed/tv/${id}/${season}/${episode}` },
     { id: 'vidsrc_pm', name: 'VidSrc PM', quality: '1080p HD', domain: 'https://vidsrc.pm', url: type === 'movie' ? `https://vidsrc.pm/embed/movie/${id}` : `https://vidsrc.pm/embed/tv/${id}/${season}/${episode}` },
@@ -93,7 +93,7 @@ export default function App() {
         
         statusMap[src.id] = 'online';
       } catch {
-        if (['2embed', 'vidsrc_me', 'polaris', 'vidsrc_to'].includes(src.id)) {
+        if (['vidsrc_me', 'polaris', 'vidsrc_to', 'embed_su'].includes(src.id)) {
           statusMap[src.id] = 'online';
         } else {
           statusMap[src.id] = 'no-stream';
@@ -406,7 +406,7 @@ export default function App() {
         )}
       </main>
 
-      {/* Media Stream Modal with Sandboxed iOS Ad Protection */}
+      {/* Media Stream Modal with VidSrc Primary & Sandbox Compatibility */}
       {selectedMedia && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-neutral-950/95 backdrop-blur-xl overflow-y-auto">
           <div className="relative w-full max-w-5xl bg-neutral-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden my-auto">
@@ -505,7 +505,7 @@ export default function App() {
                     <Server className="w-4 h-4 text-red-500" /> Stock Sources (20 Available):
                     {isCheckingSources && <RefreshCw size={12} className="animate-spin text-red-500 ml-1" />}
                   </div>
-                  <span className="text-[11px] text-neutral-500">iOS Sandboxed Protection Active</span>
+                  <span className="text-[11px] text-neutral-500">VidSrc Primary Active</span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-48 overflow-y-auto pr-1">
