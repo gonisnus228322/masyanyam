@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Search, Play, Film, Tv, Info, X, Star, 
   Sparkles, Server, Heart, Bookmark, Volume2, CheckCircle2, AlertCircle, RefreshCw 
@@ -29,6 +29,8 @@ export default function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isShieldActive, setIsShieldActive] = useState(true);
   
+  const playerContainerRef = useRef(null);
+
   // Auto-Check / Source Health States
   const [serverStatuses, setServerStatuses] = useState({});
   const [isCheckingSources, setIsCheckingSources] = useState(false);
@@ -50,10 +52,10 @@ export default function App() {
     }
   }, [watchlist]);
 
-  // 20 Stock Stream Sources
+  // 20 Stock Stream Sources with 2Embed Prime set as Primary (#1)
   const getEmbedSources = (id, type, season = 1, episode = 1) => [
-    { id: 'vidsrc_me', name: 'VidSrc Primary', quality: '1080p HD', domain: 'https://vidsrc.me', url: type === 'movie' ? `https://vidsrc.me/embed/movie?tmdb=${id}` : `https://vidsrc.me/embed/tv?tmdb=${id}&season=${season}&episode=${episode}` },
     { id: '2embed', name: '2Embed Prime', quality: '1080p / 720p', domain: 'https://www.2embed.cc', url: type === 'movie' ? `https://www.2embed.cc/embed/${id}` : `https://www.2embed.cc/embedtv/${id}&s=${season}&e=${episode}` },
+    { id: 'vidsrc_me', name: 'VidSrc Primary', quality: '1080p HD', domain: 'https://vidsrc.me', url: type === 'movie' ? `https://vidsrc.me/embed/movie?tmdb=${id}` : `https://vidsrc.me/embed/tv?tmdb=${id}&season=${season}&episode=${episode}` },
     { id: 'polaris', name: 'Polaris V2', quality: '1080p HD', domain: 'https://vidsrc.cc', url: type === 'movie' ? `https://vidsrc.cc/v2/embed/movie/${id}` : `https://vidsrc.cc/v2/embed/tv/${id}/${season}/${episode}` },
     { id: 'vidsrc_to', name: 'VidSrc TO', quality: '1080p HD', domain: 'https://vidsrc.to', url: type === 'movie' ? `https://vidsrc.to/embed/movie/${id}` : `https://vidsrc.to/embed/tv/${id}/${season}/${episode}` },
     { id: 'vidsrc_pm', name: 'VidSrc PM', quality: '1080p HD', domain: 'https://vidsrc.pm', url: type === 'movie' ? `https://vidsrc.pm/embed/movie/${id}` : `https://vidsrc.pm/embed/tv/${id}/${season}/${episode}` },
@@ -74,12 +76,12 @@ export default function App() {
     { id: 'cineb', name: 'CineB Feed', quality: '1080p HD', domain: 'https://cineb.rs', url: type === 'movie' ? `https://cineb.rs/embed/movie/${id}` : `https://cineb.rs/embed/tv/${id}/${season}/${episode}` }
   ];
 
-  // Auto-Check All 20 Sources in Background
+  // Auto-Check Health and pick 2Embed as default
   const verifySourcesHealth = async (id, type, season, episode) => {
     setIsCheckingSources(true);
     const sources = getEmbedSources(id, type, season, episode);
     const statusMap = {};
-    let firstWorkingIdx = -1;
+    let firstWorkingIdx = 0; // Default to 2embed (index 0)
 
     for (let i = 0; i < sources.length; i++) {
       const src = sources[i];
@@ -87,17 +89,13 @@ export default function App() {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 2500);
         
-        // Lightweight pre-flight ping
         await fetch(src.domain, { method: 'HEAD', mode: 'no-cors', signal: controller.signal });
         clearTimeout(timeout);
         
         statusMap[src.id] = 'online';
-        if (firstWorkingIdx === -1) firstWorkingIdx = i;
       } catch {
-        // Fallback check: mark core vidsrc/2embed nodes online by default if network blocks head ping
-        if (['vidsrc_me', '2embed', 'polaris', 'vidsrc_to'].includes(src.id)) {
+        if (['2embed', 'vidsrc_me', 'polaris', 'vidsrc_to'].includes(src.id)) {
           statusMap[src.id] = 'online';
-          if (firstWorkingIdx === -1) firstWorkingIdx = i;
         } else {
           statusMap[src.id] = 'no-stream';
         }
@@ -106,9 +104,16 @@ export default function App() {
 
     setServerStatuses(statusMap);
     setIsCheckingSources(false);
+    setActiveServer(firstWorkingIdx);
+  };
 
-    if (firstWorkingIdx !== -1) {
-      setActiveServer(firstWorkingIdx);
+  const triggerFullscreen = () => {
+    if (playerContainerRef.current) {
+      if (playerContainerRef.current.requestFullscreen) {
+        playerContainerRef.current.requestFullscreen().catch(() => {});
+      } else if (playerContainerRef.current.webkitRequestFullscreen) {
+        playerContainerRef.current.webkitRequestFullscreen();
+      }
     }
   };
 
@@ -402,7 +407,7 @@ export default function App() {
         )}
       </main>
 
-      {/* Media Stream Modal with 20 Stock Source Settings */}
+      {/* Media Stream Modal with Fullscreen & 20 Stock Source Settings */}
       {selectedMedia && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-neutral-950/95 backdrop-blur-xl overflow-y-auto">
           <div className="relative w-full max-w-5xl bg-neutral-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden my-auto">
@@ -413,18 +418,21 @@ export default function App() {
               <X className="w-5 h-5" />
             </button>
 
-            <div className="relative aspect-video bg-black w-full overflow-hidden">
+            <div ref={playerContainerRef} className="relative aspect-video bg-black w-full overflow-hidden">
               {isPlaying ? (
                 <div className="relative w-full h-full">
                   {/* Anti-Redirect Click Shield */}
                   {isShieldActive && (
                     <div 
-                      onClick={() => setIsShieldActive(false)}
+                      onClick={() => {
+                        setIsShieldActive(false);
+                        triggerFullscreen();
+                      }}
                       className="absolute inset-0 z-20 bg-transparent cursor-pointer flex items-end justify-center pb-4"
-                      title="Click once to enable player controls"
+                      title="Click once to enable player controls & fullscreen"
                     >
-                      <span className="bg-black/80 text-xs text-white px-3 py-1 rounded-full border border-white/20 pointer-events-none">
-                        Click anywhere to start player
+                      <span className="bg-black/80 text-xs text-white px-4 py-2 rounded-full border border-white/20 pointer-events-none shadow-lg animate-pulse">
+                        Click anywhere to start & enter Fullscreen
                       </span>
                     </div>
                   )}
@@ -461,13 +469,16 @@ export default function App() {
 
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/40">
                     <button
-                      onClick={() => setIsPlaying(true)}
+                      onClick={() => {
+                        setIsPlaying(true);
+                        setTimeout(triggerFullscreen, 300);
+                      }}
                       className="w-20 h-20 rounded-full bg-red-600 text-white flex items-center justify-center shadow-2xl shadow-red-600/50 hover:scale-110 active:scale-95 transition-all group"
                     >
                       <Play className="w-9 h-9 fill-current ml-1 group-hover:scale-110 transition-transform" />
                     </button>
                     <span className="text-sm font-semibold tracking-wide text-neutral-200 bg-black/60 px-4 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
-                      <Volume2 size={16} /> Tap Play to Start Stream
+                      <Volume2 size={16} /> Tap Play to Start Stream & Fullscreen
                     </span>
                   </div>
                 </div>
@@ -482,7 +493,7 @@ export default function App() {
                     <Server className="w-4 h-4 text-red-500" /> Stock Sources (20 Available):
                     {isCheckingSources && <RefreshCw size={12} className="animate-spin text-red-500 ml-1" />}
                   </div>
-                  <span className="text-[11px] text-neutral-500">Auto-selecting fastest online mirror</span>
+                  <span className="text-[11px] text-neutral-500">2Embed Prime primary mirror</span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-48 overflow-y-auto pr-1">
