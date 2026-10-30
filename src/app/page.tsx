@@ -30,6 +30,7 @@ export default function App() {
   const [isShieldActive, setIsShieldActive] = useState(true);
   
   const playerContainerRef = useRef(null);
+  const modalRef = useRef(null);
 
   // Auto-Check / Source Health States
   const [serverStatuses, setServerStatuses] = useState({});
@@ -51,6 +52,13 @@ export default function App() {
       console.error('Could not save watchlist', e);
     }
   }, [watchlist]);
+
+  // Focus modal automatically when opened for TV remotes
+  useEffect(() => {
+    if (selectedMedia && modalRef.current) {
+      modalRef.current.focus();
+    }
+  }, [selectedMedia]);
 
   // Anti-Popup Shield
   useEffect(() => {
@@ -429,13 +437,17 @@ export default function App() {
         )}
       </main>
 
-      {/* Media Stream Modal */}
+      {/* Media Stream Modal with TV Remote Focus Compatibility */}
       {selectedMedia && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-neutral-950/95 backdrop-blur-xl overflow-y-auto">
+        <div 
+          ref={modalRef}
+          tabIndex={-1}
+          className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-neutral-950/95 backdrop-blur-xl overflow-y-auto outline-none"
+        >
           <div className="relative w-full max-w-5xl bg-neutral-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden my-auto">
             <button
               onClick={() => { setSelectedMedia(null); setIsPlaying(false); setIsShieldActive(true); setActiveServer(0); }}
-              className="absolute top-4 right-4 z-30 p-2.5 rounded-full bg-black/60 hover:bg-black/90 text-neutral-300 hover:text-white transition-all backdrop-blur-md border border-white/10 focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="absolute top-4 right-4 z-30 p-2.5 rounded-full bg-black/60 hover:bg-black/90 text-neutral-300 hover:text-white transition-all backdrop-blur-md border border-white/10 focus:outline-none focus:ring-4 focus:ring-red-500"
             >
               <X className="w-5 h-5" />
             </button>
@@ -666,7 +678,6 @@ function MediaSection({ title, items, onSelect }) {
   );
 }
 
-// Fixed TV Focusable Media Card Button Wrapper
 function MediaCard({ media, onClick }) {
   const posterUrl = media.poster_path 
     ? `${POSTER_BASE_URL}${media.poster_path}` 
