@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  Search, Play, Film, Tv, TrendingUp, Info, X, Star, 
-  ChevronRight, Sparkles, Server, Volume2, ShieldAlert, Heart, Bookmark
+  Search, Play, Film, Tv, Info, X, Star, 
+  Sparkles, Server, Heart, Bookmark
 } from 'lucide-react';
 
 const TMDB_API_KEY = '82e67ddb0ee6412aa60aa10240cc50c9';
@@ -12,7 +12,7 @@ const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/original';
 const POSTER_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
 export default function App() {
-  const [currentTab, setCurrentTab] = useState('all'); // 'all', 'movie', 'tv', 'watchlist'
+  const [currentTab, setCurrentTab] = useState('all');
   const [heroMedia, setHeroMedia] = useState(null);
   const [trending, setTrending] = useState([]);
   const [popularMovies, setPopularMovies] = useState([]);
@@ -29,23 +29,21 @@ export default function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [watchlist, setWatchlist] = useState(() => {
     try {
-      const saved = localStorage.getItem('cinestream_watchlist');
+      const saved = localStorage.getItem('masyanya_watchlist');
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
     }
   });
 
-  // Save watchlist to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem('cinestream_watchlist', JSON.stringify(watchlist));
+      localStorage.setItem('masyanya_watchlist', JSON.stringify(watchlist));
     } catch (e) {
       console.error('Could not save watchlist', e);
     }
   }, [watchlist]);
 
-  // Expanded High-Quality 1080p & 4K Embed Stream Sources
   const getEmbedSources = (id, type, season = 1, episode = 1) => [
     {
       name: 'VidKing 1080p Ultra',
@@ -105,7 +103,6 @@ export default function App() {
     }
   ];
 
-  // Fetch initial home content
   useEffect(() => {
     const fetchContent = async () => {
       try {
@@ -138,7 +135,6 @@ export default function App() {
     fetchContent();
   }, []);
 
-  // Debounced search logic
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
@@ -164,7 +160,6 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Fetch specific media details when selected
   useEffect(() => {
     if (!selectedMedia) {
       setMediaDetails(null);
@@ -202,22 +197,18 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100 font-sans selection:bg-red-600 selection:text-white">
-      {/* Top Navigation */}
-      <header className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-b from-neutral-950/90 via-neutral-950/70 to-transparent backdrop-blur-md border-b border-white/5 transition-all">
+      <header className="fixed top-0 left-0 right-0 z-40 bg-neutral-950/80 backdrop-blur-md border-b border-white/5 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
-          
-          {/* Logo Name - masyanya (No icon) */}
           <div className="flex items-center gap-8">
             <button 
               onClick={() => { setSearchQuery(''); setCurrentTab('all'); }} 
-              className="flex items-center text-3xl font-black tracking-tight focus:outline-none group"
+              className="text-3xl font-black tracking-tight focus:outline-none"
             >
-              <span className="bg-gradient-to-r from-red-500 via-rose-500 to-red-600 bg-clip-text text-transparent group-hover:opacity-90 transition-opacity">
+              <span className="bg-gradient-to-r from-red-500 via-rose-500 to-red-600 bg-clip-text text-transparent">
                 masyanya
               </span>
             </button>
 
-            {/* Nav Tabs */}
             <nav className="hidden md:flex items-center gap-1 bg-white/5 p-1 rounded-full border border-white/10">
               {[
                 { id: 'all', label: 'Home', icon: Sparkles },
@@ -244,7 +235,6 @@ export default function App() {
             </nav>
           </div>
 
-          {/* Search Bar */}
           <div className="relative flex-1 max-w-md">
             <div className="relative flex items-center">
               <Search className="absolute left-3.5 w-4 h-4 text-neutral-400" />
@@ -256,10 +246,7 @@ export default function App() {
                 className="w-full bg-neutral-900/80 border border-white/10 rounded-full pl-10 pr-10 py-2 text-sm text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all"
               />
               {searchQuery && (
-                <button 
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 text-neutral-400 hover:text-white p-1"
-                >
+                <button onClick={() => setSearchQuery('')} className="absolute right-3 text-neutral-400 hover:text-white p-1">
                   <X className="w-4 h-4" />
                 </button>
               )}
@@ -268,9 +255,7 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main Content Area */}
       <main className="pt-20 pb-20">
-        {/* Search View */}
         {searchQuery ? (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
             <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
@@ -291,9 +276,7 @@ export default function App() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-20 text-neutral-500">
-                No titles or series found. Try another search term!
-              </div>
+              <div className="text-center py-20 text-neutral-500">No titles or series found. Try another search term!</div>
             )}
           </div>
         ) : currentTab === 'watchlist' ? (
@@ -315,7 +298,6 @@ export default function App() {
           </div>
         ) : (
           <>
-            {/* Hero Banner Feature */}
             {heroMedia && (
               <div className="relative w-full h-[70vh] min-h-[480px] max-h-[750px] mb-8 overflow-hidden">
                 <div className="absolute inset-0">
@@ -381,7 +363,6 @@ export default function App() {
               </div>
             )}
 
-            {/* Media Sections / Carousels */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
               {currentTab === 'all' && (
                 <>
@@ -409,12 +390,9 @@ export default function App() {
         )}
       </main>
 
-      {/* Video Stream & Details Modal */}
       {selectedMedia && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-neutral-950/90 backdrop-blur-xl overflow-y-auto">
           <div className="relative w-full max-w-5xl bg-neutral-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden my-auto">
-            
-            {/* Close Button */}
             <button
               onClick={() => { setSelectedMedia(null); setIsPlaying(false); setActiveServer(0); }}
               className="absolute top-4 right-4 z-20 p-2.5 rounded-full bg-black/60 hover:bg-black/90 text-neutral-300 hover:text-white transition-all backdrop-blur-md border border-white/10"
@@ -422,7 +400,6 @@ export default function App() {
               <X className="w-5 h-5" />
             </button>
 
-            {/* Video Player Header or Stream Container */}
             <div className="relative aspect-video bg-black w-full overflow-hidden">
               {isPlaying ? (
                 <iframe
@@ -436,7 +413,8 @@ export default function App() {
                   }
                   className="w-full h-full border-0"
                   allowFullScreen
-                  allow="autoplay; encrypted-media; picture-in-picture"
+                  allow="autoplay; encrypted-media; picture-in-picture; accelerometer; gyroscope; clipboard-write"
+                  referrerPolicy="origin"
                   title="Stream Player"
                 />
               ) : (
@@ -468,18 +446,13 @@ export default function App() {
               )}
             </div>
 
-            {/* Controls & Server Bar */}
             <div className="p-4 sm:p-6 bg-neutral-900 border-t border-white/10 space-y-6">
-              
-              {/* Quality & Server Switcher */}
               <div className="flex flex-col space-y-3 p-4 bg-neutral-950/80 rounded-xl border border-white/5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs font-semibold text-neutral-400 uppercase tracking-wider">
                     <Server className="w-4 h-4 text-red-500" /> Select 1080p Stream Server:
                   </div>
-                  <span className="text-[11px] text-neutral-500">
-                    Switch servers if resolution is limited or buffering
-                  </span>
+                  <span className="text-[11px] text-neutral-500">Switch servers if resolution is limited or buffering</span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
@@ -505,7 +478,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Episode Switcher for TV Series */}
               {mediaDetails && (mediaDetails.media_type === 'tv' || !selectedMedia.title) && mediaDetails.seasons && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-neutral-950/50 p-4 rounded-xl border border-white/5">
                   <div>
@@ -544,26 +516,22 @@ export default function App() {
                 </div>
               )}
 
-              {/* Metadata Details */}
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <h2 className="text-2xl font-bold text-white">
                     {selectedMedia.title || selectedMedia.name}
                   </h2>
-
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => toggleWatchlist(selectedMedia)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all border ${
-                        isSaved(selectedMedia.id)
-                          ? 'bg-red-600/20 border-red-500 text-red-500'
-                          : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'
-                      }`}
-                    >
-                      <Bookmark className={`w-4 h-4 ${isSaved(selectedMedia.id) ? 'fill-current' : ''}`} />
-                      {isSaved(selectedMedia.id) ? 'Saved in Watchlist' : 'Add to Watchlist'}
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => toggleWatchlist(selectedMedia)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all border ${
+                      isSaved(selectedMedia.id)
+                        ? 'bg-red-600/20 border-red-500 text-red-500'
+                        : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'
+                    }`}
+                  >
+                    <Bookmark className={`w-4 h-4 ${isSaved(selectedMedia.id) ? 'fill-current' : ''}`} />
+                    {isSaved(selectedMedia.id) ? 'Saved in Watchlist' : 'Add to Watchlist'}
+                  </button>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-neutral-400">
@@ -572,16 +540,12 @@ export default function App() {
                     {selectedMedia.vote_average?.toFixed(1)} / 10
                   </span>
                   <span>{selectedMedia.release_date || selectedMedia.first_air_date}</span>
-                  <span className="uppercase px-2 py-0.5 rounded bg-white/5 border border-white/10">
-                    {selectedMedia.media_type || (selectedMedia.title ? 'movie' : 'tv')}
-                  </span>
                 </div>
 
                 <p className="text-sm text-neutral-300 leading-relaxed pt-2">
                   {selectedMedia.overview || 'No overview summary available for this title.'}
                 </p>
               </div>
-
             </div>
           </div>
         </div>
@@ -590,19 +554,15 @@ export default function App() {
   );
 }
 
-/* Horizontal Scroll / Grid Media Section Component */
 function MediaSection({ title, items, onSelect }) {
   if (!items || items.length === 0) return null;
 
   return (
     <section className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-red-600" />
-          {title}
-        </h2>
-      </div>
-
+      <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white flex items-center gap-2">
+        <span className="w-2 h-2 rounded-full bg-red-600" />
+        {title}
+      </h2>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {items.slice(0, 12).map((item) => (
           <MediaCard key={item.id} media={item} onClick={() => onSelect(item)} />
@@ -612,7 +572,6 @@ function MediaSection({ title, items, onSelect }) {
   );
 }
 
-/* Individual Poster Card Component */
 function MediaCard({ media, onClick }) {
   const posterUrl = media.poster_path 
     ? `${POSTER_BASE_URL}${media.poster_path}` 
@@ -630,15 +589,11 @@ function MediaCard({ media, onClick }) {
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           loading="lazy"
         />
-        
-        {/* Play Overlay Hover */}
         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
           <div className="w-12 h-12 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-600/50 transform scale-75 group-hover:scale-100 transition-transform">
             <Play className="w-6 h-6 fill-current ml-0.5" />
           </div>
         </div>
-
-        {/* Rating Badge */}
         {media.vote_average > 0 && (
           <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/70 backdrop-blur-md px-2 py-0.5 rounded-md text-[10px] font-bold text-amber-400 border border-white/10">
             <Star className="w-3 h-3 fill-current" />
