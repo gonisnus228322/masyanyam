@@ -45,7 +45,7 @@ export default function App() {
     }
   }, [watchlist]);
 
-  // Fresh active stream providers
+  // Clean Lineup including Polaris and active core mirrors
   const getEmbedSources = (id, type, season = 1, episode = 1) => [
     {
       id: 'vidsrc_me',
@@ -57,10 +57,10 @@ export default function App() {
         : `https://vidsrc.me/embed/tv?tmdb=${id}&season=${season}&episode=${episode}`
     },
     {
-      id: 'vidsrc_cc',
-      name: 'VidSrc CC',
+      id: 'polaris',
+      name: 'Polaris',
       quality: '1080p HD',
-      badgeColor: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+      badgeColor: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
       url: type === 'movie'
         ? `https://vidsrc.cc/v2/embed/movie/${id}`
         : `https://vidsrc.cc/v2/embed/tv/${id}/${season}/${episode}`
@@ -75,13 +75,13 @@ export default function App() {
         : `https://embed.su/embed/tv/${id}/${season}/${episode}`
     },
     {
-      id: 'embed_2embed',
-      name: '2Embed Prime',
-      quality: '1080p / 720p',
-      badgeColor: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
+      id: 'autoembed',
+      name: 'AutoEmbed',
+      quality: '1080p HD',
+      badgeColor: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
       url: type === 'movie'
-        ? `https://www.2embed.cc/embed/${id}`
-        : `https://www.2embed.cc/embedtv/${id}&s=${season}&e=${episode}`
+        ? `https://player.autoembed.cc/embed/movie/${id}`
+        : `https://player.autoembed.cc/embed/tv/${id}/${season}/${episode}`
     }
   ];
 
@@ -386,7 +386,7 @@ export default function App() {
             <div className="relative aspect-video bg-black w-full overflow-hidden">
               {isPlaying ? (
                 <div className="relative w-full h-full">
-                  {/* Anti-Redirect Click Shield: Intercepts the very first ad pop-up click */}
+                  {/* Anti-Redirect Click Shield */}
                   {isShieldActive && (
                     <div 
                       onClick={() => setIsShieldActive(false)}
@@ -450,7 +450,7 @@ export default function App() {
                   <div className="flex items-center gap-2 text-xs font-semibold text-neutral-400 uppercase tracking-wider">
                     <Server className="w-4 h-4 text-red-500" /> Active Stream Mirrors:
                   </div>
-                  <span className="text-[11px] text-neutral-500">Unsandboxed native player mode</span>
+                  <span className="text-[11px] text-neutral-500">Shield & Unsandboxed mode active</span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
