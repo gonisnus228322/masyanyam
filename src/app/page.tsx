@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Search, Play, Film, Tv, TrendingUp, Info, X, Star, 
@@ -10,7 +12,7 @@ const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/original';
 const POSTER_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
 export default function App() {
-  const [currentTab, setCurrentTab] = useState('all'); // 'all', 'movie', 'tv'
+  const [currentTab, setCurrentTab] = useState('all'); // 'all', 'movie', 'tv', 'watchlist'
   const [heroMedia, setHeroMedia] = useState(null);
   const [trending, setTrending] = useState([]);
   const [popularMovies, setPopularMovies] = useState([]);
@@ -273,7 +275,7 @@ export default function App() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
             <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
               <Search className="w-5 h-5 text-red-500" />
-              Search Results for <span className="text-red-500">"{searchQuery}"</span>
+              Search Results for <span className="text-red-500">&quot;{searchQuery}&quot;</span>
             </h2>
 
             {isSearching ? (
