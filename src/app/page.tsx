@@ -53,7 +53,6 @@ export default function App() {
     }
   }, [watchlist]);
 
-  // Focus modal automatically when opened for TV remotes
   useEffect(() => {
     if (selectedMedia && modalRef.current) {
       modalRef.current.focus();
@@ -683,11 +682,20 @@ function MediaCard({ media, onClick }) {
     ? `${POSTER_BASE_URL}${media.poster_path}` 
     : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=500&q=80';
 
+  // Explicit TV remote keydown listener to trigger click on Enter or Space
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ' || e.keyCode === 13 || e.keyCode === 32) {
+      e.preventDefault();
+      onClick();
+    }
+  };
+
   return (
     <button
       type="button"
       tabIndex={0}
       onClick={onClick}
+      onKeyDown={handleKeyDown}
       className="group relative flex flex-col cursor-pointer bg-neutral-900 rounded-xl overflow-hidden border border-white/5 text-left w-full transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-red-600/10 focus:outline-none focus:ring-4 focus:ring-red-500 focus:scale-105"
     >
       <div className="relative aspect-[2/3] w-full bg-neutral-950 overflow-hidden">
