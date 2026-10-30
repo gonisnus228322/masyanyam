@@ -44,52 +44,43 @@ export default function App() {
     }
   }, [watchlist]);
 
-  // Verified Active Live-Probed Multi-Sources
+  // Robust, High-Availability Embed Sources
   const getEmbedSources = (id, type, season = 1, episode = 1) => [
     {
-      id: 'vidsrc_to',
+      id: 'vidsrc_me',
       name: 'VidSrc Primary',
       quality: '1080p HD',
       badgeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
       url: type === 'movie' 
-        ? `https://vidsrc.to/embed/movie/${id}`
-        : `https://vidsrc.to/embed/tv/${id}/${season}/${episode}`
+        ? `https://vidsrc.me/embed/movie?tmdb=${id}`
+        : `https://vidsrc.me/embed/tv?tmdb=${id}&season=${season}&episode=${episode}`
     },
     {
-      id: 'vidsrc_cc',
-      name: 'VidSrc V2',
+      id: 'vidsrc_pro',
+      name: 'VidSrc Pro',
       quality: '1080p HD',
       badgeColor: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
       url: type === 'movie'
-        ? `https://vidsrc.cc/v2/embed/movie/${id}`
-        : `https://vidsrc.cc/v2/embed/tv/${id}/${season}/${episode}`
+        ? `https://vidsrc.pro/embed/movie/${id}`
+        : `https://vidsrc.pro/embed/tv/${id}/${season}/${episode}`
     },
     {
-      id: 'vidsrc_pm',
-      name: 'VidSrc PM',
+      id: 'vidsrc_xyz',
+      name: 'VidSrc XYZ',
       quality: '1080p HD',
       badgeColor: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
       url: type === 'movie'
-        ? `https://vidsrc.pm/embed/movie/${id}`
-        : `https://vidsrc.pm/embed/tv/${id}/${season}/${episode}`
+        ? `https://vidsrc.xyz/embed/movie?tmdb=${id}`
+        : `https://vidsrc.xyz/embed/tv?tmdb=${id}&season=${season}&episode=${episode}`
     },
     {
       id: 'embed_2embed',
-      name: '2Embed Skin',
+      name: '2Embed Prime',
       quality: '1080p / 720p',
       badgeColor: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
       url: type === 'movie'
         ? `https://www.2embed.cc/embed/${id}`
         : `https://www.2embed.cc/embedtv/${id}&s=${season}&e=${episode}`
-    },
-    {
-      id: 'moviesapi',
-      name: 'MoviesAPI Club',
-      quality: '1080p HD',
-      badgeColor: 'bg-pink-500/20 text-pink-400 border-pink-500/30',
-      url: type === 'movie'
-        ? `https://moviesapi.club/movie/${id}`
-        : `https://moviesapi.club/tv/${id}-${season}-${episode}`
     }
   ];
 
@@ -401,9 +392,10 @@ export default function App() {
                       selectedEpisode
                     )[activeServer].url
                   }
-                  className="w-full h-full border-0 absolute inset-0 z-10"
+                  className="w-full h-full border-0 absolute inset-0 z-10 pointer-events-auto"
                   allowFullScreen
                   allow="autoplay; fullscreen; encrypted-media; picture-in-picture; accelerometer; gyroscope; clipboard-write"
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups-to-escape-sandbox allow-modals"
                   referrerPolicy="origin"
                   title="Stream Player"
                 />
@@ -440,12 +432,12 @@ export default function App() {
               <div className="flex flex-col space-y-3 p-4 bg-neutral-950/80 rounded-xl border border-white/5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs font-semibold text-neutral-400 uppercase tracking-wider">
-                    <Server className="w-4 h-4 text-red-500" /> Active Core Servers:
+                    <Server className="w-4 h-4 text-red-500" /> Active Stable Mirrors:
                   </div>
-                  <span className="text-[11px] text-neutral-500">Live-probed streaming mirrors</span>
+                  <span className="text-[11px] text-neutral-500">Anti-redirect sandbox active</span>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {getEmbedSources(
                     selectedMedia.id,
                     selectedMedia.media_type || (selectedMedia.title ? 'movie' : 'tv')
