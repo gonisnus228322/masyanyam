@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Search, Play, Film, Tv, Info, X, Star, 
-  Sparkles, Server, Heart, Bookmark, Volume2, CheckCircle2, AlertCircle, RefreshCw, ShieldAlert 
+  Sparkles, Server, Heart, Bookmark, Volume2, CheckCircle2, AlertCircle, RefreshCw, ShieldCheck 
 } from 'lucide-react';
 
 const TMDB_API_KEY = '82e67ddb0ee6412aa60aa10240cc50c9';
@@ -30,7 +30,6 @@ export default function App() {
   const [isShieldActive, setIsShieldActive] = useState(true);
   
   const playerContainerRef = useRef(null);
-  const iframeRef = useRef(null);
 
   // Auto-Check / Source Health States
   const [serverStatuses, setServerStatuses] = useState({});
@@ -52,31 +51,6 @@ export default function App() {
       console.error('Could not save watchlist', e);
     }
   }, [watchlist]);
-
-  // Anti-Popup Shield: Intercepts window.open calls and rogue redirects from iframes
-  useEffect(() => {
-    if (!isPlaying) return;
-
-    const originalOpen = window.open;
-    // Neutralize window.open so popup ads can't open new tabs or invoke mobile app links
-    window.open = function(url, target, features) {
-      console.warn('Blocked popup redirection attempt to:', url);
-      return null;
-    };
-
-    const handleBeforeUnload = (e) => {
-      // Prevents page navigation hijacking if an ad tries to replace the main page history
-      e.preventDefault();
-      e.returnValue = '';
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      window.open = originalOpen;
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [isPlaying]);
 
   // 20 Stock Stream Sources with 2Embed Prime set as Primary (#1)
   const getEmbedSources = (id, type, season = 1, episode = 1) => [
@@ -432,7 +406,7 @@ export default function App() {
         )}
       </main>
 
-      {/* Media Stream Modal with Anti-Popup Blocker & Fullscreen */}
+      {/* Media Stream Modal with Mobile Ad Shield */}
       {selectedMedia && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-neutral-950/95 backdrop-blur-xl overflow-y-auto">
           <div className="relative w-full max-w-5xl bg-neutral-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden my-auto">
@@ -446,24 +420,25 @@ export default function App() {
             <div ref={playerContainerRef} className="relative aspect-video bg-black w-full overflow-hidden">
               {isPlaying ? (
                 <div className="relative w-full h-full">
-                  {/* Anti-Redirect & Anti-Popup Click Shield */}
+                  {/* iOS/Mobile Anti-Redirect Shield Curtain */}
                   {isShieldActive && (
                     <div 
                       onClick={() => {
                         setIsShieldActive(false);
                         triggerFullscreen();
                       }}
-                      className="absolute inset-0 z-20 bg-transparent cursor-pointer flex items-end justify-center pb-4"
-                      title="Click once to block redirects, start player & enter Fullscreen"
+                      className="absolute inset-0 z-20 bg-neutral-950/60 backdrop-blur-xs cursor-pointer flex flex-col items-center justify-center gap-3 p-4 text-center"
                     >
-                      <span className="bg-black/80 text-xs text-white px-4 py-2 rounded-full border border-white/20 pointer-events-none shadow-lg animate-pulse flex items-center gap-1.5">
-                        <ShieldAlert size={14} className="text-emerald-400" /> Click anywhere to start stream safely
+                      <div className="w-16 h-16 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-600/50 animate-bounce">
+                        <Play className="w-8 h-8 fill-current ml-1" />
+                      </div>
+                      <span className="bg-black/90 text-xs font-semibold text-white px-4 py-2 rounded-full border border-white/20 shadow-xl flex items-center gap-1.5">
+                        <ShieldCheck size={14} className="text-emerald-400" /> Tap to activate secure stream player
                       </span>
                     </div>
                   )}
 
                   <iframe
-                    ref={iframeRef}
                     src={
                       getEmbedSources(
                         selectedMedia.id,
@@ -504,7 +479,7 @@ export default function App() {
                       <Play className="w-9 h-9 fill-current ml-1 group-hover:scale-110 transition-transform" />
                     </button>
                     <span className="text-sm font-semibold tracking-wide text-neutral-200 bg-black/60 px-4 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
-                      <Volume2 size={16} /> Tap Play to Start Stream & Fullscreen
+                      <Volume2 size={16} /> Tap Play to Start Stream
                     </span>
                   </div>
                 </div>
@@ -519,7 +494,7 @@ export default function App() {
                     <Server className="w-4 h-4 text-red-500" /> Stock Sources (20 Available):
                     {isCheckingSources && <RefreshCw size={12} className="animate-spin text-red-500 ml-1" />}
                   </div>
-                  <span className="text-[11px] text-neutral-500">Popup & App-Redirect Blocker Active</span>
+                  <span className="text-[11px] text-neutral-500">Mobile Ad-Shield Active</span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-48 overflow-y-auto pr-1">
