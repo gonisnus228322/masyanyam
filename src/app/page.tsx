@@ -52,7 +52,7 @@ export default function App() {
     }
   }, [watchlist]);
 
-  // Anti-Popup Shield: Intercepts window.open calls and rogue redirects from iframes
+  // Anti-Popup Shield
   useEffect(() => {
     if (!isPlaying) return;
 
@@ -75,7 +75,7 @@ export default function App() {
     };
   }, [isPlaying]);
 
-  // 20 Stock Stream Sources with VidSrc Primary set as #1 Primary
+  // 20 Stock Stream Sources
   const getEmbedSources = (id, type, season = 1, episode = 1) => [
     { id: 'vidsrc_me', name: 'VidSrc Primary', quality: '1080p HD', domain: 'https://vidsrc.me', url: type === 'movie' ? `https://vidsrc.me/embed/movie?tmdb=${id}` : `https://vidsrc.me/embed/tv?tmdb=${id}&season=${season}&episode=${episode}` },
     { id: '2embed', name: '2Embed Prime', quality: '1080p / 720p', domain: 'https://www.2embed.cc', url: type === 'movie' ? `https://www.2embed.cc/embed/${id}` : `https://www.2embed.cc/embedtv/${id}&s=${season}&e=${episode}` },
@@ -260,7 +260,7 @@ export default function App() {
                   <button
                     key={tab.id}
                     onClick={() => { setCurrentTab(tab.id); setSearchQuery(''); }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-red-500 ${
                       currentTab === tab.id 
                         ? 'bg-red-600 text-white shadow-md shadow-red-600/20' 
                         : 'text-neutral-400 hover:text-white hover:bg-white/5'
@@ -372,7 +372,7 @@ export default function App() {
                     <div className="flex flex-wrap items-center gap-3 pt-2">
                       <button
                         onClick={() => setSelectedMedia(heroMedia)}
-                        className="flex items-center gap-2.5 px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold transition-all shadow-lg shadow-red-600/30 hover:scale-105 active:scale-95"
+                        className="flex items-center gap-2.5 px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold transition-all shadow-lg shadow-red-600/30 hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-red-500/50"
                       >
                         <Play className="w-5 h-5 fill-current" />
                         Watch Now
@@ -380,7 +380,7 @@ export default function App() {
 
                       <button
                         onClick={() => setSelectedMedia(heroMedia)}
-                        className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium backdrop-blur-md transition-all border border-white/10"
+                        className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium backdrop-blur-md transition-all border border-white/10 focus:outline-none focus:ring-2 focus:ring-white"
                       >
                         <Info className="w-5 h-5" />
                         More Info
@@ -388,7 +388,7 @@ export default function App() {
 
                       <button
                         onClick={() => toggleWatchlist(heroMedia)}
-                        className={`p-3 rounded-xl transition-all border ${
+                        className={`p-3 rounded-xl transition-all border focus:outline-none focus:ring-2 focus:ring-red-500 ${
                           isSaved(heroMedia.id)
                             ? 'bg-red-600/20 border-red-500 text-red-500'
                             : 'bg-white/10 hover:bg-white/20 border-white/10 text-white'
@@ -429,13 +429,13 @@ export default function App() {
         )}
       </main>
 
-      {/* Media Stream Modal with Window Interception & Anti-Redirect Shield */}
+      {/* Media Stream Modal */}
       {selectedMedia && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-neutral-950/95 backdrop-blur-xl overflow-y-auto">
           <div className="relative w-full max-w-5xl bg-neutral-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden my-auto">
             <button
               onClick={() => { setSelectedMedia(null); setIsPlaying(false); setIsShieldActive(true); setActiveServer(0); }}
-              className="absolute top-4 right-4 z-30 p-2.5 rounded-full bg-black/60 hover:bg-black/90 text-neutral-300 hover:text-white transition-all backdrop-blur-md border border-white/10"
+              className="absolute top-4 right-4 z-30 p-2.5 rounded-full bg-black/60 hover:bg-black/90 text-neutral-300 hover:text-white transition-all backdrop-blur-md border border-white/10 focus:outline-none focus:ring-2 focus:ring-red-500"
             >
               <X className="w-5 h-5" />
             </button>
@@ -449,9 +449,9 @@ export default function App() {
             >
               {isPlaying ? (
                 <div className="relative w-full h-full">
-                  {/* Mobile Ad-Shield Curtain */}
+                  {/* Mobile/TV Shield Curtain */}
                   {isShieldActive && (
-                    <div 
+                    <button 
                       onClick={(e) => {
                         e.stopPropagation();
                         setIsShieldActive(false);
@@ -460,15 +460,15 @@ export default function App() {
                         e.stopPropagation();
                         setIsShieldActive(false);
                       }}
-                      className="absolute inset-0 z-30 bg-neutral-950/70 backdrop-blur-xs cursor-pointer flex flex-col items-center justify-center gap-3 p-4 text-center"
+                      className="absolute inset-0 z-30 w-full h-full bg-neutral-950/70 backdrop-blur-xs cursor-pointer flex flex-col items-center justify-center gap-3 p-4 text-center focus:outline-none focus:ring-4 focus:ring-red-500"
                     >
                       <div className="w-16 h-16 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-600/50 animate-bounce">
                         <Play className="w-8 h-8 fill-current ml-1" />
                       </div>
                       <span className="bg-black/90 text-xs font-semibold text-white px-4 py-2 rounded-full border border-white/25 shadow-xl">
-                        Tap here to unlock clean player (Blocks Ad Redirects)
+                        Click / Tap to launch stream player
                       </span>
-                    </div>
+                    </button>
                   )}
 
                   <iframe
@@ -507,12 +507,12 @@ export default function App() {
                         setIsPlaying(true);
                         setTimeout(triggerFullscreen, 300);
                       }}
-                      className="w-20 h-20 rounded-full bg-red-600 text-white flex items-center justify-center shadow-2xl shadow-red-600/50 hover:scale-110 active:scale-95 transition-all group"
+                      className="w-20 h-20 rounded-full bg-red-600 text-white flex items-center justify-center shadow-2xl shadow-red-600/50 hover:scale-110 active:scale-95 transition-all focus:outline-none focus:ring-4 focus:ring-red-500"
                     >
-                      <Play className="w-9 h-9 fill-current ml-1 group-hover:scale-110 transition-transform" />
+                      <Play className="w-9 h-9 fill-current ml-1" />
                     </button>
                     <span className="text-sm font-semibold tracking-wide text-neutral-200 bg-black/60 px-4 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
-                      <Volume2 size={16} /> Tap Play to Stream Securely
+                      <Volume2 size={16} /> Press OK / Play to Stream
                     </span>
                   </div>
                 </div>
@@ -527,7 +527,7 @@ export default function App() {
                     <Server className="w-4 h-4 text-red-500" /> Stock Sources (20 Available):
                     {isCheckingSources && <RefreshCw size={12} className="animate-spin text-red-500 ml-1" />}
                   </div>
-                  <span className="text-[11px] text-neutral-500">Popup Interceptor Active</span>
+                  <span className="text-[11px] text-neutral-500">VidSrc Primary Active</span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-48 overflow-y-auto pr-1">
@@ -550,7 +550,7 @@ export default function App() {
                           }
                         }}
                         disabled={isNoStream}
-                        className={`flex flex-col items-start p-2 rounded-lg border text-left transition-all ${
+                        className={`flex flex-col items-start p-2 rounded-lg border text-left transition-all focus:outline-none focus:ring-2 focus:ring-red-500 ${
                           activeServer === idx
                             ? 'bg-red-600/20 border-red-500 text-white shadow-lg shadow-red-600/20'
                             : isNoStream
@@ -617,7 +617,7 @@ export default function App() {
                   </h2>
                   <button
                     onClick={() => toggleWatchlist(selectedMedia)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all border ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all border focus:outline-none focus:ring-2 focus:ring-red-500 ${
                       isSaved(selectedMedia.id)
                         ? 'bg-red-600/20 border-red-500 text-red-500'
                         : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'
@@ -666,25 +666,28 @@ function MediaSection({ title, items, onSelect }) {
   );
 }
 
+// Fixed TV Focusable Media Card Button Wrapper
 function MediaCard({ media, onClick }) {
   const posterUrl = media.poster_path 
     ? `${POSTER_BASE_URL}${media.poster_path}` 
     : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=500&q=80';
 
   return (
-    <div
+    <button
+      type="button"
+      tabIndex={0}
       onClick={onClick}
-      className="group relative flex flex-col cursor-pointer bg-neutral-900 rounded-xl overflow-hidden border border-white/5 hover:border-red-500/50 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-red-600/10"
+      className="group relative flex flex-col cursor-pointer bg-neutral-900 rounded-xl overflow-hidden border border-white/5 text-left w-full transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-red-600/10 focus:outline-none focus:ring-4 focus:ring-red-500 focus:scale-105"
     >
       <div className="relative aspect-[2/3] w-full bg-neutral-950 overflow-hidden">
         <img
           src={posterUrl}
           alt={media.title || media.name}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          className="w-full h-full object-cover group-hover:scale-110 group-focus:scale-110 transition-transform duration-500"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <div className="w-12 h-12 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-600/50 transform scale-75 group-hover:scale-100 transition-transform">
+        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-600/50 transform scale-75 group-hover:scale-100 group-focus:scale-100 transition-transform">
             <Play className="w-6 h-6 fill-current ml-0.5" />
           </div>
         </div>
@@ -696,14 +699,14 @@ function MediaCard({ media, onClick }) {
         )}
       </div>
 
-      <div className="p-3 flex flex-col flex-1 justify-between bg-neutral-900">
-        <h3 className="text-xs font-bold text-neutral-200 line-clamp-1 group-hover:text-red-500 transition-colors">
+      <div className="p-3 flex flex-col flex-1 justify-between bg-neutral-900 w-full">
+        <h3 className="text-xs font-bold text-neutral-200 line-clamp-1 group-hover:text-red-500 group-focus:text-red-500 transition-colors">
           {media.title || media.name}
         </h3>
         <p className="text-[10px] text-neutral-500 mt-1 font-medium">
           {(media.release_date || media.first_air_date || '').substring(0, 4) || 'N/A'}
         </p>
       </div>
-    </div>
+    </button>
   );
 }
