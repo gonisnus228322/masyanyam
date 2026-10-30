@@ -44,35 +44,19 @@ export default function App() {
     }
   }, [watchlist]);
 
-  const getEmbedSources = (id, type, season = 1, episode = 1) => [
+ const getEmbedSources = (id, type, season = 1, episode = 1) => [
     {
-      name: 'VidKing 1080p Ultra',
-      quality: '1080p / 4K',
+      name: 'Vidsrc.cc (Stable)',
+      quality: '1080p HD',
       badgeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
       url: type === 'movie'
-        ? `https://vidking.net/embed/movie/${id}`
-        : `https://vidking.net/embed/tv/${id}/${season}/${episode}`
+        ? `https://vidsrc.cc/v2/embed/movie/${id}`
+        : `https://vidsrc.cc/v2/embed/tv/${id}/${season}/${episode}`
     },
     {
-      name: 'VidLink Pro',
+      name: 'AutoEmbed Stream',
       quality: '1080p HD',
       badgeColor: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-      url: type === 'movie'
-        ? `https://vidlink.pro/movie/${id}`
-        : `https://vidlink.pro/tv/${id}/${season}/${episode}`
-    },
-    {
-      name: 'Embed.su Master',
-      quality: '1080p HD',
-      badgeColor: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
-      url: type === 'movie'
-        ? `https://embed.su/embed/movie/${id}`
-        : `https://embed.su/embed/tv/${id}/${season}/${episode}`
-    },
-    {
-      name: 'AutoEmbed HQ',
-      quality: '1080p HD',
-      badgeColor: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
       url: type === 'movie'
         ? `https://player.autoembed.cc/embed/movie/${id}`
         : `https://player.autoembed.cc/embed/tv/${id}/${season}/${episode}`
@@ -84,14 +68,6 @@ export default function App() {
       url: type === 'movie' 
         ? `https://vidsrc.me/embed/movie?tmdb=${id}`
         : `https://vidsrc.me/embed/tv?tmdb=${id}&season=${season}&episode=${episode}`
-    },
-    {
-      name: 'Vidsrc.cc',
-      quality: '1080p HD',
-      badgeColor: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
-      url: type === 'movie'
-        ? `https://vidsrc.cc/v2/embed/movie/${id}`
-        : `https://vidsrc.cc/v2/embed/tv/${id}/${season}/${episode}`
     },
     {
       name: '2Embed Prime',
