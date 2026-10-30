@@ -27,6 +27,7 @@ export default function App() {
   const [selectedEpisode, setSelectedEpisode] = useState(1);
   const [mediaDetails, setMediaDetails] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isShieldActive, setIsShieldActive] = useState(true);
   const [watchlist, setWatchlist] = useState(() => {
     try {
       const saved = localStorage.getItem('masyanya_watchlist');
@@ -44,7 +45,7 @@ export default function App() {
     }
   }, [watchlist]);
 
-  // Robust, High-Availability Embed Sources
+  // Fresh active stream providers
   const getEmbedSources = (id, type, season = 1, episode = 1) => [
     {
       id: 'vidsrc_me',
@@ -56,22 +57,22 @@ export default function App() {
         : `https://vidsrc.me/embed/tv?tmdb=${id}&season=${season}&episode=${episode}`
     },
     {
-      id: 'vidsrc_pro',
-      name: 'VidSrc Pro',
+      id: 'vidsrc_cc',
+      name: 'VidSrc CC',
       quality: '1080p HD',
       badgeColor: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
       url: type === 'movie'
-        ? `https://vidsrc.pro/embed/movie/${id}`
-        : `https://vidsrc.pro/embed/tv/${id}/${season}/${episode}`
+        ? `https://vidsrc.cc/v2/embed/movie/${id}`
+        : `https://vidsrc.cc/v2/embed/tv/${id}/${season}/${episode}`
     },
     {
-      id: 'vidsrc_xyz',
-      name: 'VidSrc XYZ',
-      quality: '1080p HD',
+      id: 'embed_su',
+      name: 'Embed.su',
+      quality: '1080p / 4K',
       badgeColor: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
       url: type === 'movie'
-        ? `https://vidsrc.xyz/embed/movie?tmdb=${id}`
-        : `https://vidsrc.xyz/embed/tv?tmdb=${id}&season=${season}&episode=${episode}`
+        ? `https://embed.su/embed/movie/${id}`
+        : `https://embed.su/embed/tv/${id}/${season}/${episode}`
     },
     {
       id: 'embed_2embed',
@@ -145,6 +146,7 @@ export default function App() {
     if (!selectedMedia) {
       setMediaDetails(null);
       setIsPlaying(false);
+      setIsShieldActive(true);
       return;
     }
 
@@ -375,30 +377,44 @@ export default function App() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-neutral-950/95 backdrop-blur-xl overflow-y-auto">
           <div className="relative w-full max-w-5xl bg-neutral-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden my-auto">
             <button
-              onClick={() => { setSelectedMedia(null); setIsPlaying(false); setActiveServer(0); }}
-              className="absolute top-4 right-4 z-20 p-2.5 rounded-full bg-black/60 hover:bg-black/90 text-neutral-300 hover:text-white transition-all backdrop-blur-md border border-white/10"
+              onClick={() => { setSelectedMedia(null); setIsPlaying(false); setIsShieldActive(true); setActiveServer(0); }}
+              className="absolute top-4 right-4 z-30 p-2.5 rounded-full bg-black/60 hover:bg-black/90 text-neutral-300 hover:text-white transition-all backdrop-blur-md border border-white/10"
             >
               <X className="w-5 h-5" />
             </button>
 
             <div className="relative aspect-video bg-black w-full overflow-hidden">
               {isPlaying ? (
-                <iframe
-                  src={
-                    getEmbedSources(
-                      selectedMedia.id,
-                      selectedMedia.media_type || (selectedMedia.title ? 'movie' : 'tv'),
-                      selectedSeason,
-                      selectedEpisode
-                    )[activeServer].url
-                  }
-                  className="w-full h-full border-0 absolute inset-0 z-10 pointer-events-auto"
-                  allowFullScreen
-                  allow="autoplay; fullscreen; encrypted-media; picture-in-picture; accelerometer; gyroscope; clipboard-write"
-                  sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups-to-escape-sandbox allow-modals"
-                  referrerPolicy="origin"
-                  title="Stream Player"
-                />
+                <div className="relative w-full h-full">
+                  {/* Anti-Redirect Click Shield: Intercepts the very first ad pop-up click */}
+                  {isShieldActive && (
+                    <div 
+                      onClick={() => setIsShieldActive(false)}
+                      className="absolute inset-0 z-20 bg-transparent cursor-pointer flex items-end justify-center pb-4"
+                      title="Click once to enable player controls"
+                    >
+                      <span className="bg-black/80 text-xs text-white px-3 py-1 rounded-full border border-white/20 pointer-events-none">
+                        Click anywhere to start player
+                      </span>
+                    </div>
+                  )}
+
+                  <iframe
+                    src={
+                      getEmbedSources(
+                        selectedMedia.id,
+                        selectedMedia.media_type || (selectedMedia.title ? 'movie' : 'tv'),
+                        selectedSeason,
+                        selectedEpisode
+                      )[activeServer].url
+                    }
+                    className="w-full h-full border-0 absolute inset-0 z-10"
+                    allowFullScreen
+                    allow="autoplay; fullscreen; encrypted-media; picture-in-picture; accelerometer; gyroscope; clipboard-write"
+                    referrerPolicy="origin"
+                    title="Stream Player"
+                  />
+                </div>
               ) : (
                 <div className="relative w-full h-full flex items-center justify-center">
                   {selectedMedia.backdrop_path ? (
@@ -432,9 +448,9 @@ export default function App() {
               <div className="flex flex-col space-y-3 p-4 bg-neutral-950/80 rounded-xl border border-white/5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs font-semibold text-neutral-400 uppercase tracking-wider">
-                    <Server className="w-4 h-4 text-red-500" /> Active Stable Mirrors:
+                    <Server className="w-4 h-4 text-red-500" /> Active Stream Mirrors:
                   </div>
-                  <span className="text-[11px] text-neutral-500">Anti-redirect sandbox active</span>
+                  <span className="text-[11px] text-neutral-500">Unsandboxed native player mode</span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -444,7 +460,7 @@ export default function App() {
                   ).map((srv, idx) => (
                     <button
                       key={srv.id}
-                      onClick={() => setActiveServer(idx)}
+                      onClick={() => { setActiveServer(idx); setIsShieldActive(true); }}
                       className={`flex flex-col items-start p-2.5 rounded-lg border text-left transition-all ${
                         activeServer === idx
                           ? 'bg-red-600/20 border-red-500 text-white shadow-lg shadow-red-600/20'
