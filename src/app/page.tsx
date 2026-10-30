@@ -131,7 +131,7 @@ export default function App() {
       const src = sources[i];
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s ping timeout
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
 
         await fetch(src.domain, { 
           method: 'HEAD', 
@@ -468,7 +468,7 @@ export default function App() {
                   className="w-full h-full border-0"
                   allowFullScreen
                   allow="autoplay; fullscreen; encrypted-media; picture-in-picture; accelerometer; gyroscope; clipboard-write"
-                  sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups-to-escape-sandbox"
                   referrerPolicy="origin"
                   title="Stream Player"
                 />
