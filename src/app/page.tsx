@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Search, Play, Film, Tv, Info, X, Star, 
-  Sparkles, Server, Heart, Bookmark
+  Sparkles, Server, Heart, Bookmark, Volume2 
 } from 'lucide-react';
 
 const TMDB_API_KEY = '82e67ddb0ee6412aa60aa10240cc50c9';
@@ -44,9 +44,10 @@ export default function App() {
     }
   }, [watchlist]);
 
- const getEmbedSources = (id, type, season = 1, episode = 1) => [
+  // Ultra-Reliable Stream Sources
+  const getEmbedSources = (id, type, season = 1, episode = 1) => [
     {
-      name: 'Vidsrc.cc (Stable)',
+      name: 'Vidsrc.cc (Primary)',
       quality: '1080p HD',
       badgeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
       url: type === 'movie'
@@ -367,7 +368,7 @@ export default function App() {
       </main>
 
       {selectedMedia && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-neutral-950/90 backdrop-blur-xl overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-neutral-950/95 backdrop-blur-xl overflow-y-auto">
           <div className="relative w-full max-w-5xl bg-neutral-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden my-auto">
             <button
               onClick={() => { setSelectedMedia(null); setIsPlaying(false); setActiveServer(0); }}
@@ -414,8 +415,8 @@ export default function App() {
                     >
                       <Play className="w-9 h-9 fill-current ml-1 group-hover:scale-110 transition-transform" />
                     </button>
-                    <span className="text-sm font-semibold tracking-wide text-neutral-200 bg-black/60 px-4 py-1.5 rounded-full border border-white/10">
-                      Click Play to Start Stream
+                    <span className="text-sm font-semibold tracking-wide text-neutral-200 bg-black/60 px-4 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
+                      <Volume2 size={16} /> Click Play to Start Stream
                     </span>
                   </div>
                 </div>
@@ -426,12 +427,12 @@ export default function App() {
               <div className="flex flex-col space-y-3 p-4 bg-neutral-950/80 rounded-xl border border-white/5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs font-semibold text-neutral-400 uppercase tracking-wider">
-                    <Server className="w-4 h-4 text-red-500" /> Select 1080p Stream Server:
+                    <Server className="w-4 h-4 text-red-500" /> Active Video Sources:
                   </div>
-                  <span className="text-[11px] text-neutral-500">Switch servers if resolution is limited or buffering</span>
+                  <span className="text-[11px] text-neutral-500">Switch servers if a provider buffers</span>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {getEmbedSources(
                     selectedMedia.id,
                     selectedMedia.media_type || (selectedMedia.title ? 'movie' : 'tv')
