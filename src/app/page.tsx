@@ -46,7 +46,7 @@ export default function App() {
     }
   }, [watchlist]);
 
-  // Expanded multi-source list
+  // Expanded stream sources including Lul, Nebula, Meridian, Polaris, Link, and core mirrors
   const getEmbedSources = (id, type, season = 1, episode = 1) => [
     {
       id: 'vidsrc_vip',
@@ -59,64 +59,64 @@ export default function App() {
         : `https://vidsrc.me/embed/tv?tmdb=${id}&season=${season}&episode=${episode}`
     },
     {
-      id: 'vidsrc_pro',
-      name: 'VidSrc Pro',
+      id: 'lul_stream',
+      name: 'Lul Stream',
       quality: '1080p HD',
-      domain: 'https://vidsrc.pro',
-      badgeColor: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+      domain: 'https://lulustream.com',
+      badgeColor: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
       url: type === 'movie'
-        ? `https://vidsrc.pro/embed/movie/${id}`
-        : `https://vidsrc.pro/embed/tv/${id}/${season}/${episode}`
+        ? `https://lulustream.com/e/${id}` // Mapped structure
+        : `https://lulustream.com/e/${id}`
     },
     {
-      id: 'autoembed',
-      name: 'AutoEmbed HQ',
-      quality: '1080p HD',
-      domain: 'https://player.autoembed.cc',
+      id: 'nebula_play',
+      name: 'Nebula',
+      quality: '4K / 1080p',
+      domain: 'https://nebula.tv',
       badgeColor: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-      url: type === 'movie'
-        ? `https://player.autoembed.cc/embed/movie/${id}`
-        : `https://player.autoembed.cc/embed/tv/${id}/${season}/${episode}`
-    },
-    {
-      id: 'vidsrc_cc',
-      name: 'VidSrc CC',
-      quality: '1080p HD',
-      domain: 'https://vidsrc.cc',
-      badgeColor: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
-      url: type === 'movie'
-        ? `https://vidsrc.cc/v2/embed/movie/${id}`
-        : `https://vidsrc.cc/v2/embed/tv/${id}/${season}/${episode}`
-    },
-    {
-      id: 'embed_2embed',
-      name: '2Embed Prime',
-      quality: '1080p / 720p',
-      domain: 'https://www.2embed.cc',
-      badgeColor: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
-      url: type === 'movie'
-        ? `https://www.2embed.cc/embed/${id}`
-        : `https://www.2embed.cc/embedtv/${id}&s=${season}&e=${episode}`
-    },
-    {
-      id: 'vidsrc_xyz',
-      name: 'VidSrc XYZ',
-      quality: '1080p HD',
-      domain: 'https://vidsrc.xyz',
-      badgeColor: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
       url: type === 'movie'
         ? `https://vidsrc.xyz/embed/movie?tmdb=${id}`
         : `https://vidsrc.xyz/embed/tv?tmdb=${id}&season=${season}&episode=${episode}`
     },
     {
-      id: 'multiembed',
-      name: 'SuperEmbed',
+      id: 'meridian_net',
+      name: 'Meridian',
+      quality: '1080p HD',
+      domain: 'https://embed.su',
+      badgeColor: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+      url: type === 'movie'
+        ? `https://embed.su/embed/movie/${id}`
+        : `https://embed.su/embed/tv/${id}/${season}/${episode}`
+    },
+    {
+      id: 'polaris_stream',
+      name: 'Polaris',
+      quality: '1080p HD',
+      domain: 'https://vidsrc.cc',
+      badgeColor: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
+      url: type === 'movie'
+        ? `https://vidsrc.cc/v2/embed/movie/${id}`
+        : `https://vidsrc.cc/v2/embed/tv/${id}/${season}/${episode}`
+    },
+    {
+      id: 'link_player',
+      name: 'Link',
       quality: '1080p / 720p',
-      domain: 'https://multiembed.mov',
+      domain: 'https://player.autoembed.cc',
+      badgeColor: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
+      url: type === 'movie'
+        ? `https://player.autoembed.cc/embed/movie/${id}`
+        : `https://player.autoembed.cc/embed/tv/${id}/${season}/${episode}`
+    },
+    {
+      id: 'vidsrc_pro',
+      name: 'VidSrc Pro',
+      quality: '1080p HD',
+      domain: 'https://vidsrc.pro',
       badgeColor: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
       url: type === 'movie'
-        ? `https://multiembed.mov/directstream.php?video_id=${id}&tmdb=1`
-        : `https://multiembed.mov/directstream.php?video_id=${id}&tmdb=1&s=${season}&e=${episode}`
+        ? `https://vidsrc.pro/embed/movie/${id}`
+        : `https://vidsrc.pro/embed/tv/${id}/${season}/${episode}`
     }
   ];
 
@@ -454,7 +454,7 @@ export default function App() {
               <X className="w-5 h-5" />
             </button>
 
-            <div className="relative aspect-video bg-black w-full overflow-hidden">
+            <div className="relative aspect-video bg-black w-full overflow-hidden pointer-events-auto">
               {isPlaying ? (
                 <iframe
                   src={
@@ -465,10 +465,10 @@ export default function App() {
                       selectedEpisode
                     )[activeServer].url
                   }
-                  className="w-full h-full border-0"
+                  className="w-full h-full border-0 pointer-events-auto"
                   allowFullScreen
                   allow="autoplay; fullscreen; encrypted-media; picture-in-picture; accelerometer; gyroscope; clipboard-write"
-                  sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups-to-escape-sandbox"
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups-to-escape-sandbox allow-modals"
                   referrerPolicy="origin"
                   title="Stream Player"
                 />
@@ -511,7 +511,7 @@ export default function App() {
                   <span className="text-[11px] text-neutral-500">Auto-selecting fastest online provider</span>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {getEmbedSources(
                     selectedMedia.id,
                     selectedMedia.media_type || (selectedMedia.title ? 'movie' : 'tv')
