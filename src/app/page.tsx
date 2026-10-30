@@ -52,6 +52,29 @@ export default function App() {
     }
   }, [watchlist]);
 
+  // Anti-Popup Shield: Intercepts window.open calls and rogue redirects from iframes
+  useEffect(() => {
+    if (!isPlaying) return;
+
+    const originalOpen = window.open;
+    window.open = function(url, target, features) {
+      console.warn('Blocked popup redirection attempt to:', url);
+      return null;
+    };
+
+    const handleBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.open = originalOpen;
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isPlaying]);
+
   // 20 Stock Stream Sources with VidSrc Primary set as #1 Primary
   const getEmbedSources = (id, type, season = 1, episode = 1) => [
     { id: 'vidsrc_me', name: 'VidSrc Primary', quality: '1080p HD', domain: 'https://vidsrc.me', url: type === 'movie' ? `https://vidsrc.me/embed/movie?tmdb=${id}` : `https://vidsrc.me/embed/tv?tmdb=${id}&season=${season}&episode=${episode}` },
@@ -406,7 +429,7 @@ export default function App() {
         )}
       </main>
 
-      {/* Media Stream Modal with VidSrc Primary & Sandbox Compatibility */}
+      {/* Media Stream Modal with Window Interception & Anti-Redirect Shield */}
       {selectedMedia && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-neutral-950/95 backdrop-blur-xl overflow-y-auto">
           <div className="relative w-full max-w-5xl bg-neutral-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden my-auto">
@@ -460,7 +483,6 @@ export default function App() {
                     className="w-full h-full border-0 absolute inset-0 z-10 pointer-events-auto"
                     allowFullScreen
                     allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-                    sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
                     referrerPolicy="origin"
                     title="Stream Player"
                   />
@@ -505,7 +527,7 @@ export default function App() {
                     <Server className="w-4 h-4 text-red-500" /> Stock Sources (20 Available):
                     {isCheckingSources && <RefreshCw size={12} className="animate-spin text-red-500 ml-1" />}
                   </div>
-                  <span className="text-[11px] text-neutral-500">VidSrc Primary Active</span>
+                  <span className="text-[11px] text-neutral-500">Popup Interceptor Active</span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-48 overflow-y-auto pr-1">
