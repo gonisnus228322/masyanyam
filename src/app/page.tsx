@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Search, Play, Film, Tv, Info, X, Star, 
-  Sparkles, Server, Heart, Bookmark, Volume2 
+  Sparkles, Server, Heart, Bookmark, Volume2, CheckCircle2, AlertCircle, RefreshCw
 } from 'lucide-react';
 
 const TMDB_API_KEY = '82e67ddb0ee6412aa60aa10240cc50c9';
@@ -23,6 +23,8 @@ export default function App() {
   const [isSearching, setIsSearching] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [activeServer, setActiveServer] = useState(0);
+  const [serverStatuses, setServerStatuses] = useState({});
+  const [isTestingServers, setIsTestingServers] = useState(false);
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [selectedEpisode, setSelectedEpisode] = useState(1);
   const [mediaDetails, setMediaDetails] = useState(null);
@@ -44,49 +46,114 @@ export default function App() {
     }
   }, [watchlist]);
 
-// Stable, high-uptime video embed mirrors
+  // Expanded multi-source list
   const getEmbedSources = (id, type, season = 1, episode = 1) => [
     {
+      id: 'vidsrc_vip',
       name: 'VidSrc VIP',
       quality: '1080p HD',
+      domain: 'https://vidsrc.me',
       badgeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
       url: type === 'movie' 
         ? `https://vidsrc.me/embed/movie?tmdb=${id}`
         : `https://vidsrc.me/embed/tv?tmdb=${id}&season=${season}&episode=${episode}`
     },
     {
+      id: 'vidsrc_pro',
       name: 'VidSrc Pro',
       quality: '1080p HD',
+      domain: 'https://vidsrc.pro',
       badgeColor: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
       url: type === 'movie'
         ? `https://vidsrc.pro/embed/movie/${id}`
         : `https://vidsrc.pro/embed/tv/${id}/${season}/${episode}`
     },
     {
+      id: 'autoembed',
       name: 'AutoEmbed HQ',
       quality: '1080p HD',
+      domain: 'https://player.autoembed.cc',
       badgeColor: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
       url: type === 'movie'
         ? `https://player.autoembed.cc/embed/movie/${id}`
         : `https://player.autoembed.cc/embed/tv/${id}/${season}/${episode}`
     },
     {
-      name: '2Embed Stream',
+      id: 'vidsrc_cc',
+      name: 'VidSrc CC',
+      quality: '1080p HD',
+      domain: 'https://vidsrc.cc',
+      badgeColor: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
+      url: type === 'movie'
+        ? `https://vidsrc.cc/v2/embed/movie/${id}`
+        : `https://vidsrc.cc/v2/embed/tv/${id}/${season}/${episode}`
+    },
+    {
+      id: 'embed_2embed',
+      name: '2Embed Prime',
       quality: '1080p / 720p',
+      domain: 'https://www.2embed.cc',
       badgeColor: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
       url: type === 'movie'
         ? `https://www.2embed.cc/embed/${id}`
         : `https://www.2embed.cc/embedtv/${id}&s=${season}&e=${episode}`
     },
     {
+      id: 'vidsrc_xyz',
       name: 'VidSrc XYZ',
       quality: '1080p HD',
+      domain: 'https://vidsrc.xyz',
       badgeColor: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
       url: type === 'movie'
         ? `https://vidsrc.xyz/embed/movie?tmdb=${id}`
         : `https://vidsrc.xyz/embed/tv?tmdb=${id}&season=${season}&episode=${episode}`
+    },
+    {
+      id: 'multiembed',
+      name: 'SuperEmbed',
+      quality: '1080p / 720p',
+      domain: 'https://multiembed.mov',
+      badgeColor: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
+      url: type === 'movie'
+        ? `https://multiembed.mov/directstream.php?video_id=${id}&tmdb=1`
+        : `https://multiembed.mov/directstream.php?video_id=${id}&tmdb=1&s=${season}&e=${episode}`
     }
   ];
+
+  // Auto-Check server reachability
+  const checkServersHealth = async (mediaId, type, season, episode) => {
+    setIsTestingServers(true);
+    const sources = getEmbedSources(mediaId, type, season, episode);
+    const results = {};
+    let firstWorkingIndex = -1;
+
+    for (let i = 0; i < sources.length; i++) {
+      const src = sources[i];
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s ping timeout
+
+        await fetch(src.domain, { 
+          method: 'HEAD', 
+          mode: 'no-cors', 
+          signal: controller.signal 
+        });
+        
+        clearTimeout(timeoutId);
+        results[src.id] = 'online';
+        if (firstWorkingIndex === -1) firstWorkingIndex = i;
+      } catch {
+        results[src.id] = 'offline';
+      }
+    }
+
+    setServerStatuses(results);
+    setIsTestingServers(false);
+
+    if (firstWorkingIndex !== -1) {
+      setActiveServer(firstWorkingIndex);
+    }
+  };
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -149,6 +216,7 @@ export default function App() {
     if (!selectedMedia) {
       setMediaDetails(null);
       setIsPlaying(false);
+      setServerStatuses({});
       return;
     }
 
@@ -167,7 +235,8 @@ export default function App() {
     };
 
     fetchDetails();
-  }, [selectedMedia]);
+    checkServersHealth(selectedMedia.id, type, selectedSeason, selectedEpisode);
+  }, [selectedMedia, selectedSeason, selectedEpisode]);
 
   const toggleWatchlist = (media) => {
     const exists = watchlist.some(item => item.id === media.id);
@@ -399,7 +468,7 @@ export default function App() {
                   className="w-full h-full border-0"
                   allowFullScreen
                   allow="autoplay; fullscreen; encrypted-media; picture-in-picture; accelerometer; gyroscope; clipboard-write"
-                  sandbox="allow-scripts allow-same-origin allow-forms"
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
                   referrerPolicy="origin"
                   title="Stream Player"
                 />
@@ -425,7 +494,7 @@ export default function App() {
                       <Play className="w-9 h-9 fill-current ml-1 group-hover:scale-110 transition-transform" />
                     </button>
                     <span className="text-sm font-semibold tracking-wide text-neutral-200 bg-black/60 px-4 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
-                      <Volume2 size={16} /> Tap Play to Start Stream & Enable Audio
+                      <Volume2 size={16} /> Tap Play to Start Stream
                     </span>
                   </div>
                 </div>
@@ -436,31 +505,39 @@ export default function App() {
               <div className="flex flex-col space-y-3 p-4 bg-neutral-950/80 rounded-xl border border-white/5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs font-semibold text-neutral-400 uppercase tracking-wider">
-                    <Server className="w-4 h-4 text-red-500" /> Active Stream Mirrors:
+                    <Server className="w-4 h-4 text-red-500" /> Stream Sources:
+                    {isTestingServers && <RefreshCw size={12} className="animate-spin text-red-500 ml-1" />}
                   </div>
-                  <span className="text-[11px] text-neutral-500">Switch server if audio is muted or video buffers</span>
+                  <span className="text-[11px] text-neutral-500">Auto-selecting fastest online provider</span>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                   {getEmbedSources(
                     selectedMedia.id,
                     selectedMedia.media_type || (selectedMedia.title ? 'movie' : 'tv')
-                  ).map((srv, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setActiveServer(idx)}
-                      className={`flex flex-col items-start p-2.5 rounded-lg border text-left transition-all ${
-                        activeServer === idx
-                          ? 'bg-red-600/20 border-red-500 text-white shadow-lg shadow-red-600/20'
-                          : 'bg-white/5 border-white/5 text-neutral-400 hover:text-white hover:bg-white/10 hover:border-white/10'
-                      }`}
-                    >
-                      <span className="text-xs font-bold truncate w-full">{srv.name}</span>
-                      <span className={`text-[10px] font-semibold mt-1 px-1.5 py-0.5 rounded border ${srv.badgeColor}`}>
-                        {srv.quality}
-                      </span>
-                    </button>
-                  ))}
+                  ).map((srv, idx) => {
+                    const status = serverStatuses[srv.id];
+                    return (
+                      <button
+                        key={srv.id}
+                        onClick={() => setActiveServer(idx)}
+                        className={`flex flex-col items-start p-2.5 rounded-lg border text-left transition-all ${
+                          activeServer === idx
+                            ? 'bg-red-600/20 border-red-500 text-white shadow-lg shadow-red-600/20'
+                            : 'bg-white/5 border-white/5 text-neutral-400 hover:text-white hover:bg-white/10 hover:border-white/10'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-xs font-bold truncate">{srv.name}</span>
+                          {status === 'online' && <CheckCircle2 size={12} className="text-emerald-400" />}
+                          {status === 'offline' && <AlertCircle size={12} className="text-rose-500" />}
+                        </div>
+                        <span className={`text-[10px] font-semibold mt-1 px-1.5 py-0.5 rounded border ${srv.badgeColor}`}>
+                          {srv.quality}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
