@@ -37,6 +37,7 @@ export default function App() {
   const [isCheckingSources, setIsCheckingSources] = useState(false);
 
   const [watchlist, setWatchlist] = useState<any[]>(() => {
+    if (typeof window === 'undefined') return [];
     try {
       const saved = localStorage.getItem('masyanya_watchlist');
       return saved ? JSON.parse(saved) : [];
@@ -59,18 +60,16 @@ export default function App() {
     }
   }, [selectedMedia]);
 
-  // Ironclad Anti-Redirect / Ad Blocker Shield with TypeScript safety
+  // Ironclad Anti-Redirect / Ad Blocker Shield (Client-side only)
   useEffect(() => {
-    if (!isPlaying) return;
+    if (!isPlaying || typeof window === 'undefined') return;
 
-    // 1. Block window.open popups
     const originalOpen = window.open;
     window.open = function () {
       console.warn('Blocked external popup attempt.');
       return null;
     };
 
-    // 2. Intercept and block top-level location changes / ad redirects safely
     const originalAssign = window.location.assign;
     const originalReplace = window.location.replace;
     
@@ -92,7 +91,6 @@ export default function App() {
       return originalReplace.call(window.location, urlString);
     };
 
-    // 3. Prevent clicking external anchor links from breaking out
     const handleGlobalClick = (e: MouseEvent) => {
       const target = (e.target as HTMLElement).closest('a');
       if (target && target.href && !target.href.includes(window.location.host)) {
@@ -147,20 +145,17 @@ export default function App() {
     setIsCheckingSources(true);
     const sources = getEmbedSources(id, type, season, episode);
     const statusMap: Record<string, string> = {};
-    let firstWorkingIdx = 0;
 
     for (let i = 0; i < sources.length; i++) {
       const src = sources[i];
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 2500);
-        
+        const timeout = setTimeout(() => controller.abort(), 2000);
         await fetch(src.domain, { method: 'HEAD', mode: 'no-cors', signal: controller.signal });
         clearTimeout(timeout);
-        
         statusMap[src.id] = 'online';
       } catch {
-        if (['vidsrc_me', 'polaris', 'vidsrc_to', 'embed_su'].includes(src.id)) {
+        if (['vidsrc_me', 'polaris', 'vidsrc_to', 'embed_su', 'autoembed'].includes(src.id)) {
           statusMap[src.id] = 'online';
         } else {
           statusMap[src.id] = 'no-stream';
@@ -170,11 +165,10 @@ export default function App() {
 
     setServerStatuses(statusMap);
     setIsCheckingSources(false);
-    setActiveServer(firstWorkingIdx);
   };
 
-  // Direct Fullscreen Trigger tied immediately to user tap event
   const triggerFullscreen = () => {
+    if (typeof window === 'undefined') return;
     const container = playerContainerRef.current as any;
     if (!container) return;
 
@@ -182,15 +176,9 @@ export default function App() {
       container.requestFullscreen().catch(() => {});
     } else if (container.webkitRequestFullscreen) {
       container.webkitRequestFullscreen();
-    } else {
-      const videoEl = container.querySelector('iframe')?.contentWindow?.document?.querySelector('video');
-      if (videoEl && videoEl.webkitEnterFullscreen) {
-        videoEl.webkitEnterFullscreen();
-      }
     }
   };
 
-  // Expanded Library Fetching (Multiple Pages)
   useEffect(() => {
     const fetchContent = async () => {
       try {
@@ -581,7 +569,7 @@ export default function App() {
                     <Server className="w-4 h-4 text-red-500" /> Stock Sources (20 Available):
                     {isCheckingSources && <RefreshCw size={12} className="animate-spin text-red-500 ml-1" />}
                   </div>
-                  <span className="text-[11px] text-neutral-500">VidSrc Primary Active</span>
+                  <span className="text-[11px] text-neutral-500">Switch server if one fails</span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-48 overflow-y-auto pr-1">
