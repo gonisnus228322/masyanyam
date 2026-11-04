@@ -352,7 +352,6 @@ export default function App() {
                     alt={heroMedia.title || heroMedia.name}
                     className="w-full h-full object-cover object-center filter brightness-90"
                   />
-                  {/* Solid gradient fallback layers that WebOS handles cleanly without breaking */}
                   <div className="absolute inset-0 bg-neutral-950/60" />
                   <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/20 to-transparent" />
                   <div className="absolute inset-0 bg-gradient-to-r from-neutral-950 via-neutral-950/40 to-transparent" />
@@ -570,93 +569,118 @@ export default function App() {
                             ? 'bg-neutral-900/40 border-white/5 text-neutral-600 cursor-not-allowed opacity-50'
                             : 'bg-neutral-800 border-white/5 text-neutral-400 hover:text-white hover:bg-neutral-700'
                         }`}
-                      >
-                        <div className="flex items-center justify-between w-full">
-                          <span className="text-xs font-bold truncate">{srv.name}</span>
-                          {status === 'online' && <CheckCircle2 size={12} className="text-emerald-400 shrink-0" />}
-                          {isNoStream && <AlertCircle size={12} className="text-neutral-600 shrink-0" />}
-                        </div>
-                        <span className="text-[10px] font-medium mt-0.5 text-neutral-400">
-                          {isNoStream ? 'No stream for this' : srv.quality}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {mediaDetails && (mediaDetails.media_type === 'tv' || !selectedMedia.title) && mediaDetails.seasons && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-neutral-950 p-4 rounded-xl border border-white/5">
-                  <div>
-                    <label className="block text-xs font-semibold text-neutral-400 mb-1.5 uppercase tracking-wider">
-                      Select Season
-                    </label>
-                    <select
-                      value={selectedSeason}
-                      onChange={(e) => {
-                        setSelectedSeason(Number(e.target.value));
-                        setSelectedEpisode(1);
-                      }}
-                      className="w-full bg-neutral-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-neutral-200 focus:outline-none focus:border-red-500"
                     >
-                      {mediaDetails.seasons.filter(s => s.season_number > 0).map(s => (
-                        <option key={s.id} value={s.season_number}>
-                          Season {s.season_number} ({s.episode_count} Episodes)
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-neutral-400 mb-1.5 uppercase tracking-wider">
-                      Episode Number
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={selectedEpisode}
-                      onChange={(e) => setSelectedEpisode(Math.max(1, Number(e.target.value)))}
-                      className="w-full bg-neutral-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-neutral-200 focus:outline-none focus:border-red-500"
-                    />
-                  </div>
+                      <div className="flex items-center justify-between w-full">
+                        <span className="text-xs font-bold truncate">{srv.name}</span>
+                        {status === 'online' && <CheckCircle2 size={12} className="text-emerald-400 shrink-0" />}
+                        {isNoStream && <AlertCircle size={12} className="text-neutral-600 shrink-0" />}
+                      </div>
+                      <span className="text-[10px] font-medium mt-0.5 text-neutral-400">
+                        {isNoStream ? 'No stream for this' : srv.quality}
+                      </span>
+                    </button>
+                  );
+                })}
                 </div>
-              )}
-
-              <div className="space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <h2 className="text-2xl font-bold text-white">
-                    {selectedMedia.title || selectedMedia.name}
-                  </h2>
-                  <button
-                    onClick={() => toggleWatchlist(selectedMedia)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all border focus:outline-none focus:ring-2 focus:ring-red-500 ${
-                      isSaved(selectedMedia.id)
-                        ? 'bg-red-600/20 border-red-500 text-red-500'
-                        : 'bg-neutral-800 hover:bg-neutral-700 border-white/10 text-white'
-                    }`}
-                  >
-                    <Bookmark className={`w-4 h-4 ${isSaved(selectedMedia.id) ? 'fill-current' : ''}`} />
-                    {isSaved(selectedMedia.id) ? 'Saved in Watchlist' : 'Add to Watchlist'}
-                  </button>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-neutral-400">
-                  <span className="flex items-center gap-1 text-amber-400 bg-amber-400/20 px-2 py-0.5 rounded border border-amber-400/30">
-                    <Star className="w-3.5 h-3.5 fill-current" />
-                    {selectedMedia.vote_average?.toFixed(1)} / 10
-                  </span>
-                  <span>{selectedMedia.release_date || selectedMedia.first_air_date}</span>
-                </div>
-
-                <p className="text-sm text-neutral-300 leading-relaxed pt-2">
-                  {selectedMedia.overview || 'No overview summary available for this title.'}
-                </p>
-              </div>
             </div>
+
+            {mediaDetails && (mediaDetails.media_type === 'tv' || !selectedMedia.title) && mediaDetails.seasons && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-neutral-950 p-4 rounded-xl border border-white/5">
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-400 mb-1.5 uppercase tracking-wider">
+                    Select Season
+                  </label>
+                  <select
+                    value={selectedSeason}
+                    onChange={(e) => {
+                      setSelectedSeason(Number(e.target.value));
+                      setSelectedEpisode(1);
+                    }}
+                    className="w-full bg-neutral-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-neutral-200 focus:outline-none focus:border-red-500"
+                  >
+                    {mediaDetails.seasons.filter(s => s.season_number > 0).map(s => (
+                      <option key={s.id} value={s.season_number}>
+                        Season {s.season_number} ({s.episode_count} Episodes)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-400 mb-1.5 uppercase tracking-wider">
+                    Select Episode
+                  </label>
+                  <select
+                    value={selectedEpisode}
+                    onChange={(e) => setSelectedEpisode(Number(e.target.value))}
+                    className="w-full bg-neutral-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-neutral-200 focus:outline-none focus:border-red-500"
+                  >
+                    {Array.from(
+                      {
+                        length:
+                          mediaDetails.seasons.find(s => s.season_number === selectedSeason)?.episode_count || 24
+                      },
+                      (_, i) => i + 1
+                    ).map(epNum => (
+                      <option key={epNum} value={epNum}>
+                        Episode {epNum}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function MediaCard({ media, onClick }) {
+  const title = media.title || media.name;
+  const posterPath = media.poster_path ? `${POSTER_BASE_URL}${media.poster_path}` : null;
+  const rating = media.vote_average ? media.vote_average.toFixed(1) : null;
+  const year = (media.release_date || media.first_air_date || '').split('-')[0];
+
+  return (
+    <div 
+      onClick={onClick}
+      className="group relative flex flex-col bg-neutral-900 rounded-xl overflow-hidden border border-white/5 hover:border-red-500/50 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-red-600/10 hover:-translate-y-1"
+    >
+      <div className="relative aspect-[2/3] w-full overflow-hidden bg-neutral-950">
+        {posterPath ? (
+          <img
+            src={posterPath}
+            alt={title}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-neutral-600 text-xs">
+            No Image
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-transparent to-transparent opacity-80" />
+
+        {rating && (
+          <div className="absolute top-2.5 right-2.5 flex items-center gap-1 bg-neutral-950/80 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/10 text-amber-400 text-xs font-semibold">
+            <Star className="w-3 h-3 fill-current" />
+            <span>{rating}</span>
+          </div>
+        )}
+      </div>
+
+      <div className="p-3 flex flex-col justify-between flex-grow bg-neutral-900">
+        <h3 className="text-xs sm:text-sm font-bold text-neutral-200 group-hover:text-red-500 transition-colors line-clamp-1">
+          {title}
+        </h3>
+        <div className="flex items-center justify-between text-[11px] text-neutral-400 mt-1">
+          <span>{year}</span>
+          <span className="uppercase tracking-wider text-[10px] font-semibold bg-white/5 px-2 py-0.5 rounded border border-white/5">
+            {media.media_type === 'tv' || !media.title ? 'Series' : 'Movie'}
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -666,65 +690,17 @@ function MediaSection({ title, items, onSelect }) {
 
   return (
     <section className="space-y-4">
-      <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white flex items-center gap-2">
-        <span className="w-2 h-2 rounded-full bg-red-600" />
-        {title}
-      </h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white border-l-4 border-red-600 pl-3">
+          {title}
+        </h2>
+      </div>
+
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        {items.slice(0, 12).map((item) => (
-          <MediaCard key={item.id} media={item} onClick={() => onSelect(item)} />
+        {items.map((media) => (
+          <MediaCard key={media.id} media={media} onClick={() => onSelect(media)} />
         ))}
       </div>
     </section>
-  );
-}
-
-function MediaCard({ media, onClick }) {
-  const posterUrl = media.poster_path 
-    ? `${POSTER_BASE_URL}${media.poster_path}` 
-    : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=500&q=80';
-
-  return (
-    <button
-      type="button"
-      tabIndex={0}
-      onClick={onClick}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ' || e.keyCode === 13 || e.keyCode === 32) {
-          e.preventDefault();
-          onClick();
-        }
-      }}
-      className="group relative flex flex-col cursor-pointer bg-neutral-900 rounded-xl overflow-hidden border border-white/5 text-left w-full transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-red-500 focus:scale-105"
-    >
-      <div className="relative aspect-[2/3] w-full bg-neutral-950 overflow-hidden">
-        <img
-          src={posterUrl}
-          alt={media.title || media.name}
-          className="w-full h-full object-cover group-hover:scale-110 group-focus:scale-110 transition-transform duration-500"
-          loading="lazy"
-        />
-        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity flex items-center justify-center">
-          <div className="w-12 h-12 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-600/50">
-            <Play className="w-6 h-6 fill-current ml-0.5" />
-          </div>
-        </div>
-        {media.vote_average > 0 && (
-          <div className="absolute top-2 right-2 flex items-center gap-1 bg-neutral-900/90 px-2 py-0.5 rounded-md text-[10px] font-bold text-amber-400 border border-white/10">
-            <Star className="w-3 h-3 fill-current" />
-            {media.vote_average.toFixed(1)}
-          </div>
-        )}
-      </div>
-
-      <div className="p-3 flex flex-col flex-1 justify-between bg-neutral-900 w-full">
-        <h3 className="text-xs font-bold text-neutral-200 line-clamp-1 group-hover:text-red-500 group-focus:text-red-500 transition-colors">
-          {media.title || media.name}
-        </h3>
-        <p className="text-[10px] text-neutral-500 mt-1 font-medium">
-          {(media.release_date || media.first_air_date || '').substring(0, 4) || 'N/A'}
-        </p>
-      </div>
-    </button>
   );
 }
