@@ -569,67 +569,68 @@ export default function App() {
                             ? 'bg-neutral-900/40 border-white/5 text-neutral-600 cursor-not-allowed opacity-50'
                             : 'bg-neutral-800 border-white/5 text-neutral-400 hover:text-white hover:bg-neutral-700'
                         }`}
-                    >
-                      <div className="flex items-center justify-between w-full">
-                        <span className="text-xs font-bold truncate">{srv.name}</span>
-                        {status === 'online' && <CheckCircle2 size={12} className="text-emerald-400 shrink-0" />}
-                        {isNoStream && <AlertCircle size={12} className="text-neutral-600 shrink-0" />}
-                      </div>
-                      <span className="text-[10px] font-medium mt-0.5 text-neutral-400">
-                        {isNoStream ? 'No stream for this' : srv.quality}
-                      </span>
-                    </button>
-                  );
-                })}
-                </div>
-            </div>
-
-            {mediaDetails && (mediaDetails.media_type === 'tv' || !selectedMedia.title) && mediaDetails.seasons && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-neutral-950 p-4 rounded-xl border border-white/5">
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-400 mb-1.5 uppercase tracking-wider">
-                    Select Season
-                  </label>
-                  <select
-                    value={selectedSeason}
-                    onChange={(e) => {
-                      setSelectedSeason(Number(e.target.value));
-                      setSelectedEpisode(1);
-                    }}
-                    className="w-full bg-neutral-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-neutral-200 focus:outline-none focus:border-red-500"
-                  >
-                    {mediaDetails.seasons.filter(s => s.season_number > 0).map(s => (
-                      <option key={s.id} value={s.season_number}>
-                        Season {s.season_number} ({s.episode_count} Episodes)
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-400 mb-1.5 uppercase tracking-wider">
-                    Select Episode
-                  </label>
-                  <select
-                    value={selectedEpisode}
-                    onChange={(e) => setSelectedEpisode(Number(e.target.value))}
-                    className="w-full bg-neutral-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-neutral-200 focus:outline-none focus:border-red-500"
-                  >
-                    {Array.from(
-                      {
-                        length:
-                          mediaDetails.seasons.find(s => s.season_number === selectedSeason)?.episode_count || 24
-                      },
-                      (_, i) => i + 1
-                    ).map(epNum => (
-                      <option key={epNum} value={epNum}>
-                        Episode {epNum}
-                      </option>
-                    ))}
-                  </select>
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-xs font-bold truncate">{srv.name}</span>
+                          {status === 'online' && <CheckCircle2 size={12} className="text-emerald-400 shrink-0" />}
+                          {isNoStream && <AlertCircle size={12} className="text-neutral-600 shrink-0" />}
+                        </div>
+                        <span className="text-[10px] font-medium mt-0.5 text-neutral-400">
+                          {isNoStream ? 'No stream for this' : srv.quality}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-            )}
+
+              {mediaDetails && (mediaDetails.media_type === 'tv' || !selectedMedia.title) && mediaDetails.seasons && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-neutral-950 p-4 rounded-xl border border-white/5">
+                  <div>
+                    <label className="block text-xs font-semibold text-neutral-400 mb-1.5 uppercase tracking-wider">
+                      Select Season
+                    </label>
+                    <select
+                      value={selectedSeason}
+                      onChange={(e) => {
+                        setSelectedSeason(Number(e.target.value));
+                        setSelectedEpisode(1);
+                      }}
+                      className="w-full bg-neutral-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-neutral-200 focus:outline-none focus:border-red-500"
+                    >
+                      {mediaDetails.seasons.filter(s => s.season_number > 0).map(s => (
+                        <option key={s.id} value={s.season_number}>
+                          Season {s.season_number} ({s.episode_count} Episodes)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-neutral-400 mb-1.5 uppercase tracking-wider">
+                      Select Episode
+                    </label>
+                    <select
+                      value={selectedEpisode}
+                      onChange={(e) => setSelectedEpisode(Number(e.target.value))}
+                      className="w-full bg-neutral-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-neutral-200 focus:outline-none focus:border-red-500"
+                    >
+                      {Array.from(
+                        {
+                          length:
+                            mediaDetails.seasons.find(s => s.season_number === selectedSeason)?.episode_count || 24
+                        },
+                        (_, i) => i + 1
+                      ).map(epNum => (
+                        <option key={epNum} value={epNum}>
+                          Episode {epNum}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
