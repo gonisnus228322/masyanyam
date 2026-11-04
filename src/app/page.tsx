@@ -60,7 +60,7 @@ export default function App() {
     }
   }, [selectedMedia]);
 
-  // Safe Popup Blocker (Only blocks window.open popups without breaking Next.js router)
+  // Safe Popup Blocker
   useEffect(() => {
     if (!isPlaying || typeof window === 'undefined') return;
 
@@ -70,16 +70,8 @@ export default function App() {
       return null;
     };
 
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = '';
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
     return () => {
       window.open = originalOpen;
-      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [isPlaying]);
 
@@ -131,18 +123,6 @@ export default function App() {
 
     setServerStatuses(statusMap);
     setIsCheckingSources(false);
-  };
-
-  const triggerFullscreen = () => {
-    if (typeof window === 'undefined') return;
-    const container = playerContainerRef.current as any;
-    if (!container) return;
-
-    if (container.requestFullscreen) {
-      container.requestFullscreen().catch(() => {});
-    } else if (container.webkitRequestFullscreen) {
-      container.webkitRequestFullscreen();
-    }
   };
 
   useEffect(() => {
@@ -513,7 +493,17 @@ export default function App() {
                       onClick={() => {
                         setIsPlaying(true);
                         setIsShieldActive(true);
-                        triggerFullscreen();
+                        // Safe fullscreen request wrapped in timeout so DOM mounts first
+                        setTimeout(() => {
+                          const container = playerContainerRef.current as any;
+                          if (container) {
+                            if (container.requestFullscreen) {
+                              container.requestFullscreen().catch(() => {});
+                            } else if (container.webkitRequestFullscreen) {
+                              container.webkitRequestFullscreen();
+                            }
+                          }
+                        }, 50);
                       }}
                       className="w-20 h-20 rounded-full bg-red-600 text-white flex items-center justify-center shadow-2xl shadow-red-600/50 focus:outline-none focus:ring-4 focus:ring-red-500"
                     >
