@@ -146,26 +146,33 @@ export default function App() {
     }
   };
 
+  // Expanded Library Fetching (Multiple Pages)
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        const [trendingRes, moviesRes, tvRes, topRes] = await Promise.all([
+        const [trendingRes, m1, m2, tv1, tv2, top1, top2] = await Promise.all([
           fetch(`${TMDB_BASE_URL}/trending/all/week?api_key=${TMDB_API_KEY}`),
-          fetch(`${TMDB_BASE_URL}/movie/popular?api_key=${TMDB_API_KEY}`),
-          fetch(`${TMDB_BASE_URL}/tv/popular?api_key=${TMDB_API_KEY}`),
-          fetch(`${TMDB_BASE_URL}/movie/top_rated?api_key=${TMDB_API_KEY}`)
+          fetch(`${TMDB_BASE_URL}/movie/popular?api_key=${TMDB_API_KEY}&page=1`),
+          fetch(`${TMDB_BASE_URL}/movie/popular?api_key=${TMDB_API_KEY}&page=2`),
+          fetch(`${TMDB_BASE_URL}/tv/popular?api_key=${TMDB_API_KEY}&page=1`),
+          fetch(`${TMDB_BASE_URL}/tv/popular?api_key=${TMDB_API_KEY}&page=2`),
+          fetch(`${TMDB_BASE_URL}/movie/top_rated?api_key=${TMDB_API_KEY}&page=1`),
+          fetch(`${TMDB_BASE_URL}/movie/top_rated?api_key=${TMDB_API_KEY}&page=2`)
         ]);
 
         const trendingData = await trendingRes.json();
-        const moviesData = await moviesRes.json();
-        const tvData = await tvRes.json();
-        const topData = await topRes.json();
+        const m1Data = await m1.json();
+        const m2Data = await m2.json();
+        const tv1Data = await tv1.json();
+        const tv2Data = await tv2.json();
+        const top1Data = await top1.json();
+        const top2Data = await top2.json();
 
         const filteredTrending = (trendingData.results || []).filter(item => item.backdrop_path);
         setTrending(filteredTrending);
-        setPopularMovies(moviesData.results || []);
-        setPopularTV(tvData.results || []);
-        setTopRated(topData.results || []);
+        setPopularMovies([...(m1Data.results || []), ...(m2Data.results || [])]);
+        setPopularTV([...(tv1Data.results || []), ...(tv2Data.results || [])]);
+        setTopRated([...(top1Data.results || []), ...(top2Data.results || [])]);
 
         if (filteredTrending.length > 0) {
           setHeroMedia(filteredTrending[0]);
@@ -414,22 +421,22 @@ export default function App() {
               {currentTab === 'all' && (
                 <>
                   <MediaSection title="Weekly Trending" items={trending} onSelect={setSelectedMedia} />
-                  <MediaSection title="Popular Movies" items={popularMovies} onSelect={setSelectedMedia} />
-                  <MediaSection title="Popular TV Series" items={popularTV} onSelect={setSelectedMedia} />
+                  <MediaSection title="Popular Movies Library" items={popularMovies} onSelect={setSelectedMedia} />
+                  <MediaSection title="Popular TV Series Library" items={popularTV} onSelect={setSelectedMedia} />
                   <MediaSection title="Top Rated Classics" items={topRated} onSelect={setSelectedMedia} />
                 </>
               )}
 
               {currentTab === 'movie' && (
                 <>
-                  <MediaSection title="Popular Movies" items={popularMovies} onSelect={setSelectedMedia} />
+                  <MediaSection title="Popular Movies Library" items={popularMovies} onSelect={setSelectedMedia} />
                   <MediaSection title="Top Rated Movies" items={topRated} onSelect={setSelectedMedia} />
                 </>
               )}
 
               {currentTab === 'tv' && (
                 <>
-                  <MediaSection title="Trending TV Series" items={popularTV} onSelect={setSelectedMedia} />
+                  <MediaSection title="Popular TV Series Library" items={popularTV} onSelect={setSelectedMedia} />
                 </>
               )}
             </div>
@@ -517,7 +524,7 @@ export default function App() {
                     <button
                       onClick={() => {
                         setIsPlaying(true);
-                        setTimeout(triggerFullscreen, 300);
+                        setTimeout(triggerFullscreen, 100);
                       }}
                       className="w-20 h-20 rounded-full bg-red-600 text-white flex items-center justify-center shadow-2xl shadow-red-600/50 focus:outline-none focus:ring-4 focus:ring-red-500"
                     >
