@@ -61,7 +61,7 @@ export default function App() {
     }
   }, [selectedMedia]);
 
-  // Track fullscreen state to conditionally display translucent button
+  // Track fullscreen state to conditionally display backup fullscreen button
   useEffect(() => {
     const handleFullscreenChange = () => {
       const fsElement = document.fullscreenElement || (document as any).webkitFullscreenElement;
@@ -470,7 +470,7 @@ export default function App() {
               className="relative aspect-video bg-black w-full overflow-hidden"
             >
               {isPlaying ? (
-                <div className="relative w-full h-full group">
+                <div className="relative w-full h-full">
                   {/* Anti-Popup Event Catch Shield */}
                   {isShieldActive && (
                     <div 
@@ -501,17 +501,6 @@ export default function App() {
                     referrerPolicy="origin"
                     title="Stream Player"
                   />
-
-                  {/* Translucent Fullscreen Button (Only visible when NOT in fullscreen) */}
-                  {!isFullscreen && (
-                    <button
-                      onClick={triggerFullscreen}
-                      className="absolute bottom-4 right-4 z-40 p-2.5 rounded-xl bg-black/40 hover:bg-black/70 backdrop-blur-md text-white/80 hover:text-white border border-white/10 transition-all focus:outline-none focus:ring-2 focus:ring-red-500"
-                      title="Toggle Fullscreen"
-                    >
-                      <Maximize className="w-5 h-5" />
-                    </button>
-                  )}
                 </div>
               ) : (
                 <div className="relative w-full h-full flex items-center justify-center">
@@ -547,14 +536,24 @@ export default function App() {
             </div>
 
             <div className="p-4 sm:p-6 bg-neutral-900 border-t border-white/10 space-y-6">
-              {/* Stock Source Grid Panel */}
+              {/* Backup Fullscreen Button & Stock Source Grid Panel */}
               <div className="flex flex-col space-y-3 p-4 bg-neutral-950 rounded-xl border border-white/5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs font-semibold text-neutral-400 uppercase tracking-wider">
                     <Server className="w-4 h-4 text-red-500" /> Stock Sources (20 Available):
                     {isCheckingSources && <RefreshCw size={12} className="animate-spin text-red-500 ml-1" />}
                   </div>
-                  <span className="text-[11px] text-neutral-500">Switch server if one fails</span>
+
+                  {/* Backup Fullscreen Button (Only shows when playing and not already full screen) */}
+                  {isPlaying && !isFullscreen && (
+                    <button
+                      onClick={triggerFullscreen}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-400 hover:text-red-300 border border-red-500/30 text-xs font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-red-500"
+                    >
+                      <Maximize className="w-3.5 h-3.5" />
+                      Backup Fullscreen
+                    </button>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-48 overflow-y-auto pr-1">
