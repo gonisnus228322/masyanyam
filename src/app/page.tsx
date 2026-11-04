@@ -60,7 +60,7 @@ export default function App() {
     }
   }, [selectedMedia]);
 
-  // Ironclad Anti-Redirect / Ad Blocker Shield (Client-side only)
+  // Safe Popup Blocker (Only blocks window.open popups without breaking Next.js router)
   useEffect(() => {
     if (!isPlaying || typeof window === 'undefined') return;
 
@@ -70,49 +70,15 @@ export default function App() {
       return null;
     };
 
-    const originalAssign = window.location.assign;
-    const originalReplace = window.location.replace;
-    
-    window.location.assign = function(url: string | URL) {
-      const urlString = String(url);
-      if (urlString && !urlString.includes(window.location.host)) {
-        console.warn('Blocked external redirect to:', urlString);
-        return;
-      }
-      return originalAssign.call(window.location, urlString);
-    };
-
-    window.location.replace = function(url: string | URL) {
-      const urlString = String(url);
-      if (urlString && !urlString.includes(window.location.host)) {
-        console.warn('Blocked external redirect replacement to:', urlString);
-        return;
-      }
-      return originalReplace.call(window.location, urlString);
-    };
-
-    const handleGlobalClick = (e: MouseEvent) => {
-      const target = (e.target as HTMLElement).closest('a');
-      if (target && target.href && !target.href.includes(window.location.host)) {
-        e.preventDefault();
-        e.stopPropagation();
-        console.warn('Blocked external link navigation:', target.href);
-      }
-    };
-
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
       e.returnValue = '';
     };
 
-    window.addEventListener('click', handleGlobalClick, true);
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
       window.open = originalOpen;
-      window.location.assign = originalAssign;
-      window.location.replace = originalReplace;
-      window.removeEventListener('click', handleGlobalClick, true);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [isPlaying]);
