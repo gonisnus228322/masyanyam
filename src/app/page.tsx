@@ -13,30 +13,30 @@ const POSTER_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState('all');
-  const [heroMedia, setHeroMedia] = useState(null);
-  const [trending, setTrending] = useState([]);
-  const [popularMovies, setPopularMovies] = useState([]);
-  const [popularTV, setPopularTV] = useState([]);
-  const [topRated, setTopRated] = useState([]);
+  const [heroMedia, setHeroMedia] = useState<any>(null);
+  const [trending, setTrending] = useState<any[]>([]);
+  const [popularMovies, setPopularMovies] = useState<any[]>([]);
+  const [popularTV, setPopularTV] = useState<any[]>([]);
+  const [topRated, setTopRated] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [selectedMedia, setSelectedMedia] = useState(null);
+  const [selectedMedia, setSelectedMedia] = useState<any>(null);
   const [activeServer, setActiveServer] = useState(0);
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [selectedEpisode, setSelectedEpisode] = useState(1);
-  const [mediaDetails, setMediaDetails] = useState(null);
+  const [mediaDetails, setMediaDetails] = useState<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isShieldActive, setIsShieldActive] = useState(true);
   
-  const playerContainerRef = useRef(null);
-  const modalRef = useRef(null);
+  const playerContainerRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   // Auto-Check / Source Health States
-  const [serverStatuses, setServerStatuses] = useState({});
+  const [serverStatuses, setServerStatuses] = useState<Record<string, string>>({});
   const [isCheckingSources, setIsCheckingSources] = useState(false);
 
-  const [watchlist, setWatchlist] = useState(() => {
+  const [watchlist, setWatchlist] = useState<any[]>(() => {
     try {
       const saved = localStorage.getItem('masyanya_watchlist');
       return saved ? JSON.parse(saved) : [];
@@ -59,7 +59,7 @@ export default function App() {
     }
   }, [selectedMedia]);
 
-  // Ironclad Anti-Redirect / Ad Blocker Shield
+  // Ironclad Anti-Redirect / Ad Blocker Shield with TypeScript safety
   useEffect(() => {
     if (!isPlaying) return;
 
@@ -70,29 +70,31 @@ export default function App() {
       return null;
     };
 
-    // 2. Intercept and block top-level location changes / ad redirects
+    // 2. Intercept and block top-level location changes / ad redirects safely
     const originalAssign = window.location.assign;
     const originalReplace = window.location.replace;
     
-    window.location.assign = function(url) {
-      if (url && !url.includes(window.location.host)) {
-        console.warn('Blocked external redirect to:', url);
+    window.location.assign = function(url: string | URL) {
+      const urlString = String(url);
+      if (urlString && !urlString.includes(window.location.host)) {
+        console.warn('Blocked external redirect to:', urlString);
         return;
       }
-      return originalAssign.call(window.location, url);
+      return originalAssign.call(window.location, urlString);
     };
 
-    window.location.replace = function(url) {
-      if (url && !url.includes(window.location.host)) {
-        console.warn('Blocked external redirect replacement to:', url);
+    window.location.replace = function(url: string | URL) {
+      const urlString = String(url);
+      if (urlString && !urlString.includes(window.location.host)) {
+        console.warn('Blocked external redirect replacement to:', urlString);
         return;
       }
-      return originalReplace.call(window.location, url);
+      return originalReplace.call(window.location, urlString);
     };
 
     // 3. Prevent clicking external anchor links from breaking out
-    const handleGlobalClick = (e) => {
-      const target = e.target.closest('a');
+    const handleGlobalClick = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement).closest('a');
       if (target && target.href && !target.href.includes(window.location.host)) {
         e.preventDefault();
         e.stopPropagation();
@@ -100,7 +102,7 @@ export default function App() {
       }
     };
 
-    const handleBeforeUnload = (e) => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
       e.returnValue = '';
     };
@@ -118,7 +120,7 @@ export default function App() {
   }, [isPlaying]);
 
   // 20 Stock Stream Sources
-  const getEmbedSources = (id, type, season = 1, episode = 1) => [
+  const getEmbedSources = (id: number, type: string, season = 1, episode = 1) => [
     { id: 'vidsrc_me', name: 'VidSrc Primary', quality: '1080p HD', domain: 'https://vidsrc.me', url: type === 'movie' ? `https://vidsrc.me/embed/movie?tmdb=${id}` : `https://vidsrc.me/embed/tv?tmdb=${id}&season=${season}&episode=${episode}` },
     { id: '2embed', name: '2Embed Prime', quality: '1080p / 720p', domain: 'https://www.2embed.cc', url: type === 'movie' ? `https://www.2embed.cc/embed/${id}` : `https://www.2embed.cc/embedtv/${id}&s=${season}&e=${episode}` },
     { id: 'polaris', name: 'Polaris V2', quality: '1080p HD', domain: 'https://vidsrc.cc', url: type === 'movie' ? `https://vidsrc.cc/v2/embed/movie/${id}` : `https://vidsrc.cc/v2/embed/tv/${id}/${season}/${episode}` },
@@ -141,10 +143,10 @@ export default function App() {
     { id: 'cineb', name: 'CineB Feed', quality: '1080p HD', domain: 'https://cineb.rs', url: type === 'movie' ? `https://cineb.rs/embed/movie/${id}` : `https://cineb.rs/embed/tv/${id}/${season}/${episode}` }
   ];
 
-  const verifySourcesHealth = async (id, type, season, episode) => {
+  const verifySourcesHealth = async (id: number, type: string, season: number, episode: number) => {
     setIsCheckingSources(true);
     const sources = getEmbedSources(id, type, season, episode);
-    const statusMap = {};
+    const statusMap: Record<string, string> = {};
     let firstWorkingIdx = 0;
 
     for (let i = 0; i < sources.length; i++) {
@@ -173,7 +175,7 @@ export default function App() {
 
   // Direct Fullscreen Trigger tied immediately to user tap event
   const triggerFullscreen = () => {
-    const container = playerContainerRef.current;
+    const container = playerContainerRef.current as any;
     if (!container) return;
 
     if (container.requestFullscreen) {
@@ -210,7 +212,7 @@ export default function App() {
         const top1Data = await top1.json();
         const top2Data = await top2.json();
 
-        const filteredTrending = (trendingData.results || []).filter(item => item.backdrop_path);
+        const filteredTrending = (trendingData.results || []).filter((item: any) => item.backdrop_path);
         setTrending(filteredTrending);
         setPopularMovies([...(m1Data.results || []), ...(m2Data.results || [])]);
         setPopularTV([...(tv1Data.results || []), ...(tv2Data.results || [])]);
@@ -241,7 +243,7 @@ export default function App() {
           `${TMDB_BASE_URL}/search/multi?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(searchQuery)}`
         );
         const data = await res.json();
-        setSearchResults((data.results || []).filter(item => item.poster_path || item.backdrop_path));
+        setSearchResults((data.results || []).filter((item: any) => item.poster_path || item.backdrop_path));
       } catch (err) {
         console.error('Search error:', err);
       } finally {
@@ -279,7 +281,7 @@ export default function App() {
     verifySourcesHealth(selectedMedia.id, type, selectedSeason, selectedEpisode);
   }, [selectedMedia, selectedSeason, selectedEpisode]);
 
-  const toggleWatchlist = (media) => {
+  const toggleWatchlist = (media: any) => {
     const exists = watchlist.some(item => item.id === media.id);
     if (exists) {
       setWatchlist(watchlist.filter(item => item.id !== media.id));
@@ -288,7 +290,7 @@ export default function App() {
     }
   };
 
-  const isSaved = (mediaId) => watchlist.some(item => item.id === mediaId);
+  const isSaved = (mediaId: number) => watchlist.some(item => item.id === mediaId);
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100 font-sans selection:bg-red-600 selection:text-white pb-16">
@@ -638,7 +640,7 @@ export default function App() {
                       }}
                       className="w-full bg-neutral-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-neutral-200 focus:outline-none focus:border-red-500"
                     >
-                      {mediaDetails.seasons.filter(s => s.season_number > 0).map(s => (
+                      {mediaDetails.seasons.filter((s: any) => s.season_number > 0).map((s: any) => (
                         <option key={s.id} value={s.season_number}>
                           Season {s.season_number} ({s.episode_count} Episodes)
                         </option>
@@ -658,7 +660,7 @@ export default function App() {
                       {Array.from(
                         {
                           length:
-                            mediaDetails.seasons.find(s => s.season_number === selectedSeason)?.episode_count || 24
+                            mediaDetails.seasons.find((s: any) => s.season_number === selectedSeason)?.episode_count || 24
                         },
                         (_, i) => i + 1
                       ).map(epNum => (
@@ -678,7 +680,7 @@ export default function App() {
   );
 }
 
-function MediaCard({ media, onClick }) {
+function MediaCard({ media, onClick }: { media: any; onClick: () => void }) {
   const title = media.title || media.name;
   const posterPath = media.poster_path ? `${POSTER_BASE_URL}${media.poster_path}` : null;
   const rating = media.vote_average ? media.vote_average.toFixed(1) : null;
@@ -726,7 +728,7 @@ function MediaCard({ media, onClick }) {
   );
 }
 
-function MediaSection({ title, items, onSelect }) {
+function MediaSection({ title, items, onSelect }: { title: string; items: any[]; onSelect: (media: any) => void }) {
   if (!items || items.length === 0) return null;
 
   return (
