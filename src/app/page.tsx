@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Search, Play, Film, Tv, Info, X, Star, 
-  Sparkles, Server, Heart, Bookmark, Volume2, CheckCircle2, AlertCircle, RefreshCw, Maximize
+  Sparkles, Server, Heart, Bookmark, Volume2, CheckCircle2, AlertCircle, RefreshCw 
 } from 'lucide-react';
 
 const TMDB_API_KEY = '82e67ddb0ee6412aa60aa10240cc50c9';
@@ -59,24 +59,44 @@ export default function App() {
     }
   }, [selectedMedia]);
 
-  // Aggressive Popup & External Redirect Interceptor
+  // Ironclad Anti-Redirect / Ad Blocker Shield
   useEffect(() => {
     if (!isPlaying) return;
 
-    // 1. Override window.open
+    // 1. Block window.open popups
     const originalOpen = window.open;
     window.open = function () {
-      console.warn('Blocked external popup attempt');
+      console.warn('Blocked external popup attempt.');
       return null;
     };
 
-    // 2. Intercept click events on outer window anchor elements with external targets
+    // 2. Intercept and block top-level location changes / ad redirects
+    const originalAssign = window.location.assign;
+    const originalReplace = window.location.replace;
+    
+    window.location.assign = function(url) {
+      if (url && !url.includes(window.location.host)) {
+        console.warn('Blocked external redirect to:', url);
+        return;
+      }
+      return originalAssign.call(window.location, url);
+    };
+
+    window.location.replace = function(url) {
+      if (url && !url.includes(window.location.host)) {
+        console.warn('Blocked external redirect replacement to:', url);
+        return;
+      }
+      return originalReplace.call(window.location, url);
+    };
+
+    // 3. Prevent clicking external anchor links from breaking out
     const handleGlobalClick = (e) => {
       const target = e.target.closest('a');
-      if (target && target.href && !target.href.startsWith(window.location.origin)) {
+      if (target && target.href && !target.href.includes(window.location.host)) {
         e.preventDefault();
         e.stopPropagation();
-        console.warn('Blocked external navigation:', target.href);
+        console.warn('Blocked external link navigation:', target.href);
       }
     };
 
@@ -90,6 +110,8 @@ export default function App() {
 
     return () => {
       window.open = originalOpen;
+      window.location.assign = originalAssign;
+      window.location.replace = originalReplace;
       window.removeEventListener('click', handleGlobalClick, true);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
@@ -149,7 +171,7 @@ export default function App() {
     setActiveServer(firstWorkingIdx);
   };
 
-  // Cross-Platform & Mobile Web (iPhone/Safari) Fullscreen Handler
+  // Direct Fullscreen Trigger tied immediately to user tap event
   const triggerFullscreen = () => {
     const container = playerContainerRef.current;
     if (!container) return;
@@ -159,7 +181,6 @@ export default function App() {
     } else if (container.webkitRequestFullscreen) {
       container.webkitRequestFullscreen();
     } else {
-      // Fallback for iOS video elements inside iframe
       const videoEl = container.querySelector('iframe')?.contentWindow?.document?.querySelector('video');
       if (videoEl && videoEl.webkitEnterFullscreen) {
         videoEl.webkitEnterFullscreen();
@@ -516,15 +537,6 @@ export default function App() {
                     referrerPolicy="origin"
                     title="Stream Player"
                   />
-
-                  {/* Manual Mobile Fullscreen Control Trigger */}
-                  <button
-                    onClick={triggerFullscreen}
-                    className="absolute bottom-3 right-3 z-20 p-2.5 rounded-lg bg-neutral-900/90 text-white border border-white/20 shadow-lg hover:bg-red-600 focus:outline-none"
-                    title="Fullscreen Mode"
-                  >
-                    <Maximize className="w-4 h-4" />
-                  </button>
                 </div>
               ) : (
                 <div className="relative w-full h-full flex items-center justify-center">
@@ -545,14 +557,14 @@ export default function App() {
                       onClick={() => {
                         setIsPlaying(true);
                         setIsShieldActive(true);
-                        setTimeout(triggerFullscreen, 300);
+                        triggerFullscreen();
                       }}
                       className="w-20 h-20 rounded-full bg-red-600 text-white flex items-center justify-center shadow-2xl shadow-red-600/50 focus:outline-none focus:ring-4 focus:ring-red-500"
                     >
                       <Play className="w-9 h-9 fill-current ml-1" />
                     </button>
                     <span className="text-sm font-semibold tracking-wide text-neutral-200 bg-neutral-900/90 px-4 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
-                      <Volume2 size={16} /> Tap Play to Stream
+                      <Volume2 size={16} /> Tap Play to Stream & Fullscreen
                     </span>
                   </div>
                 </div>
