@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Search, Play, Film, Tv, Info, X, Star, 
-  Sparkles, Server, Heart, Bookmark, Volume2, CheckCircle2, AlertCircle, RefreshCw 
+  Sparkles, Server, Heart, Bookmark, Volume2, CheckCircle2, AlertCircle, RefreshCw, Maximize
 } from 'lucide-react';
 
 const TMDB_API_KEY = '82e67ddb0ee6412aa60aa10240cc50c9';
@@ -28,6 +28,7 @@ export default function App() {
   const [mediaDetails, setMediaDetails] = useState<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isShieldActive, setIsShieldActive] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -59,6 +60,22 @@ export default function App() {
       modalRef.current.focus();
     }
   }, [selectedMedia]);
+
+  // Track fullscreen state to conditionally display translucent button
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const fsElement = document.fullscreenElement || (document as any).webkitFullscreenElement;
+      setIsFullscreen(!!fsElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+    };
+  }, []);
 
   // Safe Popup Blocker
   useEffect(() => {
@@ -123,6 +140,17 @@ export default function App() {
 
     setServerStatuses(statusMap);
     setIsCheckingSources(false);
+  };
+
+  const triggerFullscreen = () => {
+    const container = playerContainerRef.current as any;
+    if (!container) return;
+
+    if (container.requestFullscreen) {
+      container.requestFullscreen().catch(() => {});
+    } else if (container.webkitRequestFullscreen) {
+      container.webkitRequestFullscreen();
+    }
   };
 
   useEffect(() => {
@@ -442,7 +470,7 @@ export default function App() {
               className="relative aspect-video bg-black w-full overflow-hidden"
             >
               {isPlaying ? (
-                <div className="relative w-full h-full">
+                <div className="relative w-full h-full group">
                   {/* Anti-Popup Event Catch Shield */}
                   {isShieldActive && (
                     <div 
@@ -473,6 +501,17 @@ export default function App() {
                     referrerPolicy="origin"
                     title="Stream Player"
                   />
+
+                  {/* Translucent Fullscreen Button (Only visible when NOT in fullscreen) */}
+                  {!isFullscreen && (
+                    <button
+                      onClick={triggerFullscreen}
+                      className="absolute bottom-4 right-4 z-40 p-2.5 rounded-xl bg-black/40 hover:bg-black/70 backdrop-blur-md text-white/80 hover:text-white border border-white/10 transition-all focus:outline-none focus:ring-2 focus:ring-red-500"
+                      title="Toggle Fullscreen"
+                    >
+                      <Maximize className="w-5 h-5" />
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="relative w-full h-full flex items-center justify-center">
@@ -493,17 +532,7 @@ export default function App() {
                       onClick={() => {
                         setIsPlaying(true);
                         setIsShieldActive(true);
-                        // Safe fullscreen request wrapped in timeout so DOM mounts first
-                        setTimeout(() => {
-                          const container = playerContainerRef.current as any;
-                          if (container) {
-                            if (container.requestFullscreen) {
-                              container.requestFullscreen().catch(() => {});
-                            } else if (container.webkitRequestFullscreen) {
-                              container.webkitRequestFullscreen();
-                            }
-                          }
-                        }, 50);
+                        setTimeout(() => triggerFullscreen(), 50);
                       }}
                       className="w-20 h-20 rounded-full bg-red-600 text-white flex items-center justify-center shadow-2xl shadow-red-600/50 focus:outline-none focus:ring-4 focus:ring-red-500"
                     >
