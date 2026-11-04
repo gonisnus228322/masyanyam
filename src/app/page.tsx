@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Search, Play, Film, Tv, Info, X, Star, 
-  Sparkles, Server, Heart, Bookmark, Volume2, CheckCircle2, AlertCircle, RefreshCw 
+  Sparkles, Server, Heart, Bookmark, Volume2, CheckCircle2, AlertCircle, RefreshCw, Maximize
 } from 'lucide-react';
 
 const TMDB_API_KEY = '82e67ddb0ee6412aa60aa10240cc50c9';
@@ -59,14 +59,25 @@ export default function App() {
     }
   }, [selectedMedia]);
 
-  // Anti-Popup Shield
+  // Aggressive Popup & External Redirect Interceptor
   useEffect(() => {
     if (!isPlaying) return;
 
+    // 1. Override window.open
     const originalOpen = window.open;
-    window.open = function(url, target, features) {
-      console.warn('Blocked popup redirection attempt to:', url);
+    window.open = function () {
+      console.warn('Blocked external popup attempt');
       return null;
+    };
+
+    // 2. Intercept click events on outer window anchor elements with external targets
+    const handleGlobalClick = (e) => {
+      const target = e.target.closest('a');
+      if (target && target.href && !target.href.startsWith(window.location.origin)) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.warn('Blocked external navigation:', target.href);
+      }
     };
 
     const handleBeforeUnload = (e) => {
@@ -74,10 +85,12 @@ export default function App() {
       e.returnValue = '';
     };
 
+    window.addEventListener('click', handleGlobalClick, true);
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
       window.open = originalOpen;
+      window.removeEventListener('click', handleGlobalClick, true);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [isPlaying]);
@@ -136,12 +149,20 @@ export default function App() {
     setActiveServer(firstWorkingIdx);
   };
 
+  // Cross-Platform & Mobile Web (iPhone/Safari) Fullscreen Handler
   const triggerFullscreen = () => {
-    if (playerContainerRef.current) {
-      if (playerContainerRef.current.requestFullscreen) {
-        playerContainerRef.current.requestFullscreen().catch(() => {});
-      } else if (playerContainerRef.current.webkitRequestFullscreen) {
-        playerContainerRef.current.webkitRequestFullscreen();
+    const container = playerContainerRef.current;
+    if (!container) return;
+
+    if (container.requestFullscreen) {
+      container.requestFullscreen().catch(() => {});
+    } else if (container.webkitRequestFullscreen) {
+      container.webkitRequestFullscreen();
+    } else {
+      // Fallback for iOS video elements inside iframe
+      const videoEl = container.querySelector('iframe')?.contentWindow?.document?.querySelector('video');
+      if (videoEl && videoEl.webkitEnterFullscreen) {
+        videoEl.webkitEnterFullscreen();
       }
     }
   };
@@ -462,15 +483,12 @@ export default function App() {
             <div 
               ref={playerContainerRef} 
               className="relative aspect-video bg-black w-full overflow-hidden"
-              onTouchStart={(e) => {
-                if (isShieldActive) e.stopPropagation();
-              }}
             >
               {isPlaying ? (
                 <div className="relative w-full h-full">
-                  {/* Mobile/TV Shield Curtain */}
+                  {/* Anti-Popup Event Catch Shield */}
                   {isShieldActive && (
-                    <button 
+                    <div 
                       onClick={(e) => {
                         e.stopPropagation();
                         setIsShieldActive(false);
@@ -479,15 +497,8 @@ export default function App() {
                         e.stopPropagation();
                         setIsShieldActive(false);
                       }}
-                      className="absolute inset-0 z-30 w-full h-full bg-neutral-950/80 cursor-pointer flex flex-col items-center justify-center gap-3 p-4 text-center focus:outline-none focus:ring-4 focus:ring-red-500"
-                    >
-                      <div className="w-16 h-16 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-600/50">
-                        <Play className="w-8 h-8 fill-current ml-1" />
-                      </div>
-                      <span className="bg-neutral-900 text-xs font-semibold text-white px-4 py-2 rounded-full border border-white/20 shadow-xl">
-                        Click / Tap to launch stream player
-                      </span>
-                    </button>
+                      className="absolute inset-0 z-30 w-full h-full bg-transparent cursor-pointer flex flex-col items-center justify-center"
+                    />
                   )}
 
                   <iframe
@@ -505,6 +516,15 @@ export default function App() {
                     referrerPolicy="origin"
                     title="Stream Player"
                   />
+
+                  {/* Manual Mobile Fullscreen Control Trigger */}
+                  <button
+                    onClick={triggerFullscreen}
+                    className="absolute bottom-3 right-3 z-20 p-2.5 rounded-lg bg-neutral-900/90 text-white border border-white/20 shadow-lg hover:bg-red-600 focus:outline-none"
+                    title="Fullscreen Mode"
+                  >
+                    <Maximize className="w-4 h-4" />
+                  </button>
                 </div>
               ) : (
                 <div className="relative w-full h-full flex items-center justify-center">
@@ -524,14 +544,15 @@ export default function App() {
                     <button
                       onClick={() => {
                         setIsPlaying(true);
-                        setTimeout(triggerFullscreen, 100);
+                        setIsShieldActive(true);
+                        setTimeout(triggerFullscreen, 300);
                       }}
                       className="w-20 h-20 rounded-full bg-red-600 text-white flex items-center justify-center shadow-2xl shadow-red-600/50 focus:outline-none focus:ring-4 focus:ring-red-500"
                     >
                       <Play className="w-9 h-9 fill-current ml-1" />
                     </button>
                     <span className="text-sm font-semibold tracking-wide text-neutral-200 bg-neutral-900/90 px-4 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
-                      <Volume2 size={16} /> Press OK / Play to Stream
+                      <Volume2 size={16} /> Tap Play to Stream
                     </span>
                   </div>
                 </div>
